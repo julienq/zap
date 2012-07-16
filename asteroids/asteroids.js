@@ -19,9 +19,9 @@
   // Make a new asteroid, size 1, 2, or 3 (from smallest to largest)
   cosmos.make_asteroid = function (size) {
     var asteroid = zap.make_sprite($path(), this.asteroids, ur_sprite);
-    var r = zap.p["ASTEROID_{0}_R".fmt(size)];
-    var r_amp = zap.p["ASTEROID_{0}_R_AMP".fmt(size)];
-    var sectors = zap.p["ASTEROID_{0}_SECTORS".fmt(size)];
+    var r = window["$ASTEROID_{0}_R".fmt(size)];
+    var r_amp = window["$ASTEROID_{0}_R_AMP".fmt(size)];
+    var sectors = window["$ASTEROID_{0}_SECTORS".fmt(size)];
     var points = [];
     asteroid.r = 0;
     for (var i = 0; i < sectors; ++i) {
@@ -42,9 +42,9 @@
   // Make a starry field
   cosmos.init_stars = function () {
     var bg = document.getElementById("background");
-    for (var i = 0, m = zap.p.STAR_DENSITY * this.vb.width * this.vb.height;
+    for (var i = 0, m = $STAR_DENSITY * this.vb.width * this.vb.height;
         i < m; ++i) {
-      bg.appendChild($circle({ r: Math.random() * zap.p.STAR_RADIUS,
+      bg.appendChild($circle({ r: Math.random() * $STAR_RADIUS,
         cx: zap.random_int(0, this.vb.width),
         cy: zap.random_int(0, this.vb.height),
         "fill-opacity": Math.random() }));
@@ -64,17 +64,27 @@
       var rr = zap.random_int(r, r * 2);
       asteroid.position(this.vb.width / 2 + rr * Math.cos(th),
         this.vb.height / 2 + rr * Math.sin(th));
-      asteroid.vx = zap.random_int_signed(zap.p.ASTEROID_V_MIN,
-          zap.p.ASTEROID_V_MAX);
-      asteroid.vy = zap.random_int_signed(zap.p.ASTEROID_V_MIN,
-          zap.p.ASTEROID_V_MAX);
-      asteroid.va = zap.random_int_signed(zap.p.ASTEROID_V_MIN,
-          zap.p.ASTEROID_V_MAX) / zap.p.ASTEROID_VA_RATE;
+      asteroid.vx = zap.random_int_signed($ASTEROID_V_MIN, $ASTEROID_V_MAX);
+      asteroid.vy = zap.random_int_signed($ASTEROID_V_MIN, $ASTEROID_V_MAX);
+      asteroid.va = zap.random_int_signed($ASTEROID_V_MIN, $ASTEROID_V_MAX) /
+        $ASTEROID_VA_RATE;
     }
   };
 
 
   var ur_ship = Object.create(ur_sprite);
+
+  ur_ship.set_position = function () {
+    ur_sprite.set_position.call(this);
+    if (this.acceleration > 0 && Math.random() < $PLUME_P) {
+      var p = zap.make_sprite($use("#plume"), this, ur_sprite);
+      p.ttl = $PLUME_TTL;
+      p.position(this.x + zap.random_int_around($SHIP_R),
+          this.y + zap.random_int_around($SHIP_R),
+          this.a + 180 + zap.random_int_around($PLUME_ARC));
+      p.velocity = $PLUME_VELOCITY;
+    }
+  };
 
   cosmos.make_ship = function () {
     var ship = zap.make_sprite($use("#ship"), this.player_layer, ur_ship);
@@ -88,7 +98,7 @@
     }
     this.ship = this.make_ship();
     this.ship.velocity = 0;
-    this.ship.max_velocity = zap.p.SHIP_V_MAX;
+    this.ship.max_velocity = $SHIP_V_MAX;
   };
 
   cosmos.init_controls = function () {
@@ -98,13 +108,13 @@
         // cosmos.ship.fire();
       } if (e.which === 37) {
         e.preventDefault();
-        this.ship.va = -zap.p.SHIP_VA;
+        this.ship.va = -$SHIP_VA;
       } else if (e.which === 38) {
         e.preventDefault();
-        this.ship.acceleration = zap.p.SHIP_ACCELERATION;
+        this.ship.acceleration = $SHIP_ACCELERATION;
       } else if (e.which === 39) {
         e.preventDefault();
-        this.ship.va = zap.p.SHIP_VA;
+        this.ship.va = $SHIP_VA;
       } else if (e.which === 40) {
         e.preventDefault();
       }
@@ -117,17 +127,29 @@
         this.ship.va = 0;
       } else if (e.which === 38) {
         e.preventDefault();
-        this.ship.acceleration = zap.p.SHIP_DECELERATION;
+        this.ship.acceleration = $SHIP_DECELERATION;
       } else if (e.which === 39) {
         e.preventDefault();
         this.ship.va = 0;
       } else if (e.which === 40) {
         e.preventDefault();
-        zap.play_sound("hyperspace_sound");
-        this.ship.position(zap.random_int(0, this.vb.width),
-          zap.random_int(0, this.vb.height), zap.random_int(0, 360));
+        this.hyperspace();
       }
     }.bind(this));
+  };
+
+  function flash(k) {
+    document.body.classList.add(k);
+    window.setTimeout(function () {
+      document.body.classList.remove(k);
+    }, $FLASH_DELAY);
+  }
+
+  cosmos.hyperspace = function () {
+    zap.play_sound("hyperspace_sound", $VOLUME);
+    this.ship.position(zap.random_int(0, this.vb.width),
+      zap.random_int(0, this.vb.height), zap.random_int(0, 360));
+    flash("hyperspace-{0}".fmt(zap.random_int(0, 5)));
   };
 
   cosmos.init_stars();

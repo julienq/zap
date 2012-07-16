@@ -13,6 +13,66 @@ body {
   font-family: Univers, "Helvetica Neue", Helvetica, sans-serif;
 }
 
+.hyperspace-0 {
+  background-image: -moz-linear-gradient(270deg, #024, #08f);
+  background-image: -webkit-linear-gradient(270deg, #024, #08f);
+  color: #f80;
+}
+
+.hyperspace-0 #foreground {
+  stroke: #f80;
+}
+
+.hyperspace-1 {
+  background-image: -moz-linear-gradient(270deg, #240, #8f0);
+  background-image: -webkit-linear-gradient(270deg, #240, #8f0);
+  color: #08f;
+}
+
+.hyperspace-1 #foreground {
+  stroke: #08f;
+}
+
+.hyperspace-2 {
+  background-image: -moz-linear-gradient(270deg, #402, #f08);
+  background-image: -webkit-linear-gradient(270deg, #402, #f08);
+  color: #0f8;
+}
+
+.hyperspace-2 #foreground {
+  stroke: #0f8;
+}
+
+.hyperspace-3 {
+  background-image: -moz-linear-gradient(270deg, #204, #80f);
+  background-image: -webkit-linear-gradient(270deg, #204, #80f);
+  color: #8f0;
+}
+
+.hyperspace-3 #foreground {
+  stroke: #8f0;
+}
+
+.hyperspace-4 {
+  background-image: -moz-linear-gradient(270deg, #420, #f80);
+  background-image: -webkit-linear-gradient(270deg, #420, #f80);
+  color: #08f;
+}
+
+.hyperspace-4 #foreground {
+  stroke: #08f;
+}
+
+.hyperspace-5 {
+  background-image: -moz-linear-gradient(270deg, #042, #0f8);
+  background-image: -webkit-linear-gradient(270deg, #042, #0f8);
+  color: #f08;
+}
+
+.hyperspace-5 #foreground {
+  stroke: #f08;
+}
+
 .roman {
   font-variant: small-caps;
 }

@@ -144,6 +144,10 @@
     return use;
   };
 
+  zap.deg2rad = function (a) {
+    return a / 180 * Math.PI;
+  };
+
   // Get clientX/clientY as an object { x: ..., y: ... } for events that may
   // be either a mouse event or a touch event, in which case the position of
   // the first touch is returned.
@@ -178,6 +182,10 @@
     });
   };
 
+  zap.rad2deg = function (th) {
+    return th / Math.PI * 180;
+  };
+
   // Return a random element from an array
   zap.random_element = function (a) {
     return a[zap.random_int(a.length - 1)];
@@ -190,6 +198,10 @@
       min = 0;
     }
     return min + Math.floor(Math.random() * (max + 1 - min));
+  };
+
+  zap.random_int_around = function (n) {
+    return Math.round((n / 2) - Math.random() * (n + 1));
   };
 
   // Generate a random integer in the [-max, -min] U [min, max] range
@@ -208,7 +220,6 @@
       elem.removeChild(elem.firstChild);
     }
   };
-
 
   // Remove an item from an array
   zap.remove_from_array = function (array, item) {
@@ -305,7 +316,7 @@
 
     remove: function () {
       if (this.parent) {
-        this.parent.children.splice(this.parent.children.indexOf(this), 1);
+        this.parent.sprites.splice(this.parent.sprites.indexOf(this), 1);
       }
       this.elem.parentNode.removeChild(this.elem);
       delete this.parent;
@@ -374,7 +385,7 @@
       if (parent instanceof window.Node) {
         parent.appendChild(sprite.elem);
       } else {
-        parent.parentNode.appendChild(sprite.elem);
+        parent.elem.parentNode.appendChild(sprite.elem);
       }
     }
     return sprite;
@@ -432,12 +443,11 @@
   });
 
   // Parameters
-  zap.p = {};
   A.forEach.call(document.querySelectorAll("[data-param]"), function (p) {
     if (p.dataset.hasOwnProperty("num")) {
-      zap.p[p.dataset.param] = parseFloat(p.dataset.num);
+      window["$" + p.dataset.param] = parseFloat(p.dataset.num);
     } else {
-      zap.p[p.dataset.param] = p.textContent;
+      window["$" + p.dataset.param] = p.textContent;
     }
   });
 
@@ -445,7 +455,7 @@
   // If the ZAP_AUDIO_CHANNELS parameter is not set, we assume no audio
   zap.play_sound = (function () {
     var channels = [];
-    for (var i = 0; i < zap.p.ZAP_AUDIO_CHANNELS; ++i) {
+    for (var i = 0; i < $ZAP_AUDIO_CHANNELS; ++i) {
       channels[i] = new Audio();
       channels[i]._done = -1;
     }
@@ -454,7 +464,7 @@
       if (volume >= 0 && volume <= 1) {
         sound.volume = volume;
       }
-      for (var i = 0; i < zap.p.ZAP_AUDIO_CHANNELS; ++i) {
+      for (var i = 0; i < $ZAP_AUDIO_CHANNELS; ++i) {
         var t = Date.now();
         var channel = channels[i];
         if (channel._done < t) {
