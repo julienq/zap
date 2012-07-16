@@ -3,8 +3,8 @@ Zap
 
 Zap is Javascript library (with additional CSS and HTML resources) for SVG with
 a focus on games. It is a standalone library comprising utility functions (text
-formatting, element creation, parametrization, &c.) and basic objects (layers,
-sprites, and particles at the moment.)
+formatting, element creation, randomness, color, parametrization, &c.) and basic
+objects (layers, sprites, and particles at the moment.)
 
 
 Overview
@@ -48,13 +48,14 @@ removed.
 Sample Games
 ------------
 
-* [Asteroids](zap/blob/asteroids/)
+* [Asteroids](zap/tree/master/asteroids/)
 * More to come
 
 
 TODO List
 ---------
 
+* Rotation vs. direction
 * Documentation
 * Generator script (HTML skeleton with SVG, css/js stubs)
 * Dev mode with parameters modification
@@ -62,4 +63,3 @@ TODO List
 * Help with keyboard handling
 * Camera control (zoom, rotate and pan)
 * Animation frames for sprites and sprite editor
-* Samples: snake, memory, isometric game, freeeeze, &c.

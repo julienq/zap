@@ -4,9 +4,9 @@
   var A = Array.prototype;
 
   if (!window.requestAnimationFrame) {
-    window.requestAnimationFrame = window.mozRequestAnimationFrame ||
+    window.requestAnimationFrame = /*window.mozRequestAnimationFrame ||
       window.msRequestAnimationFrame || window.oRequestAnimationFrame ||
-      window.webkitRequestAnimationFrame || function (f) {
+      window.webkitRequestAnimationFrame ||*/ function (f) {
       window.setTimeout(function () {
         f(Date.now());
       }, 15);
@@ -154,6 +154,14 @@
     return th / Math.PI * 180;
   };
 
+  // Pad a string to the given length with the given padding (defaults to 0)
+  zap.pad = function(string, length, padding) {
+    if (typeof padding !== "string") padding = "0";
+    if (typeof string !== "string") string = string.toString();
+    var l = length + 1 - string.length;
+    return l > 0 ? (Array(l).join(padding)) + string : string;
+  };
+
   // Return a random element from an array
   zap.random_element = function (a) {
     return a[zap.random_int(a.length - 1)];
@@ -177,6 +185,11 @@
   zap.random_int_signed = function (min, max) {
     return zap.random_int(min, max) * (Math.random() < 0.5 ? -1 : 1);
   }
+
+  // Return a random number in the [min, max[ range
+  zap.random_number = function(min, max) {
+    return min + Math.random() * (max - min);
+  };
 
   // Remap a value from a given range to another range (from Processing)
   zap.remap = function (value, istart, istop, ostart, ostop) {
@@ -208,6 +221,74 @@
       });
     }
   };
+
+
+  // Color functions
+
+  // Yes, these are the colors from d3.js in case anybody asks
+  // https://github.com/mbostock/d3/wiki/Ordinal-Scales#wiki-category10
+  // TODO come up with own palette
+  zap.color_10 = function(n) {
+    var colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+      "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"];
+    if (!n) {
+      n = zap.random_int(0, colors.length);
+    }
+    return colors[Math.abs(n % colors.length)];
+  };
+
+  zap.color_20 = function(n) {
+    var colors = ["#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78", "#2ca02c",
+      "#98df8a", "#d62728", "#ff9896", "#9467bd", "#c5b0d5", "#8c564b",
+      "#c49c94", "#e377c2", "#f7b6d2", "#7f7f7f", "#c7c7c7", "#bcbd22",
+      "#dbdb8d", "#17becf", "#9edae5"];
+    if (!n) {
+      n = zap.random_int(0, colors.length);
+    }
+    return colors[Math.abs(n % colors.length)];
+  };
+
+  // Convert a color from hsv space (hue in radians, saturation and brightness
+  // in the [0, 1] range) to RGB, returned as an array in the [0, 256[ range.
+  zap.hsv_to_rgb = function(h, s, v) {
+    s = zap.clamp(s, 0, 1);
+    v = zap.clamp(v, 0, 1);
+    if (s === 0) {
+      var v_ = Math.round(v * 255);
+      return [v_, v_, v_];
+    } else {
+      h = (((h * 180 / Math.PI) + 360) % 360) / 60;
+      var i = Math.floor(h);
+      var f = h - i;
+      var p = v * (1 - s);
+      var q = v * (1 - (s * f));
+      var t = v * (1 - (s * (1 - f)));
+      return [Math.round([v, q, p, p, t, v][i] * 255),
+        Math.round([t, v, v, q, p, p][i] * 255),
+        Math.round([p, p, t, v, v, q][i] * 255)];
+    }
+  };
+
+  // Convert a color from hsv space (hue in degrees, saturation and brightness
+  // in the [0, 1] range) to an RGB hex value
+  zap.hsv_to_hex = function(h, s, v) {
+    return zap.rgb_to_hex.apply(this, zap.hsv_to_rgb(h, s, v));
+  };
+
+  // Convert an RGB color (3 values in the 0..255 range) to a hex value
+  zap.rgb_to_hex = function(r, g, b) {
+    return "#" + A.map.call(arguments, function (x) {
+        return zap.pad(x.toString(16), 2, "0");
+      }).join("");
+  };
+
+  // Convert an sRGB color (3 values in the 0..1 range) to a hex value
+  zap.srgb_to_hex = function(r, g, b) {
+    return "#" + [].map.call(arguments, function (x) {
+        return zap.pad(Math.floor(x * 255).toString(16), 2, "0");
+      }).join("");
+  };
+
 
   // Sprites
   zap.sprite = {
@@ -259,7 +340,7 @@
 
   // Initialize a sprite with its element, parent (another sprite or a layer)
   zap.make_sprite = function (elem, parent, proto) {
-    var sprite = Object.create(proto || sprite_prototype);
+    var sprite = Object.create(proto || zap.sprite);
     sprite.elem = elem;
     sprite.sprites = [];
     sprite.x = 0;
@@ -369,6 +450,9 @@
   // Init audio (this is adapted from Perlenspiel)
   // If the ZAP_AUDIO_CHANNELS parameter is not set, we assume no audio
   zap.play_sound = (function () {
+    if (typeof $ZAP_AUDIO_CHANNELS !== "number") {
+      return;
+    }
     var channels = [];
     for (var i = 0; i < $ZAP_AUDIO_CHANNELS; ++i) {
       channels[i] = new Audio();
