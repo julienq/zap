@@ -3,8 +3,8 @@ Zap
 
 Zap is Javascript library (with additional CSS and HTML resources) for SVG with
 a focus on games. It is a standalone library comprising utility functions (text
-formatting, element creation, custom events, localization, parametrization, &c.)
-and basic objects.
+formatting, element creation, parametrization, &c.) and basic objects (layers,
+sprites, and particles at the moment.)
 
 
 Overview
@@ -44,6 +44,12 @@ Particles are really sprites with an additional property **ttl** (_time to
 live_) defining how many seconds it will be shown before being automatically
 removed.
 
+
+Sample Games
+------------
+
+* [Asteroids](zap/blob/asteroids/)
+* More to come
 
 
 TODO List
