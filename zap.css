@@ -1,0 +1,30 @@
+html {
+  width: 100%;
+  height: 100%;
+}
+
+.zap-l10n, .zap-params {
+  display: none;
+}
+
+.zap-frame {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  display: -moz-box;
+  -moz-box-orient: vertical;
+}
+
+.zap-content {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  position: relative;
+}
+
+svg.zap-full {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+}
