@@ -115,8 +115,7 @@
   ur_ship.set_position = function () {
     ur_sprite.set_position.call(this);
     if (this.acceleration > 0 && Math.random() < $PLUME_P) {
-      var p = zap.make_sprite($use("#plume"), this, ur_sprite);
-      p.ttl = $PLUME_TTL;
+      var p = zap.make_particle($use("#plume"), this, $PLUME_TTL, ur_sprite);
       p.position(this.x + zap.random_int_around(this.r),
           this.y + zap.random_int_around(this.r),
           this.a + 180 + zap.random_int_around($PLUME_ARC));
@@ -133,11 +132,11 @@
       return;
     }
     this.last_shot = now;
-    var bullet = zap.make_sprite($use("#bullet"), this, ur_sprite);
+    var bullet = zap.make_particle($use("#bullet"), this,
+        $BULLET_RANGE / $BULLET_V, ur_sprite);
     bullet.is_bullet = true;
     bullet.r = 0;
     bullet.r_collide = 0;
-    bullet.ttl = $BULLET_RANGE / $BULLET_V;
     var th = zap.deg2rad(this.a);
     bullet.x = this.x + this.r * Math.cos(th);
     bullet.y = this.y + this.r * Math.sin(th);

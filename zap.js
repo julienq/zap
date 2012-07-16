@@ -144,44 +144,12 @@
     return use;
   };
 
+  // Degree to radian conversion
   zap.deg2rad = function (a) {
     return a / 180 * Math.PI;
   };
 
-  // Get clientX/clientY as an object { x: ..., y: ... } for events that may
-  // be either a mouse event or a touch event, in which case the position of
-  // the first touch is returned.
-  zap.event_client_pos = function (e) {
-    return { x: e.targetTouches ? e.targetTouches[0].clientX : e.clientX,
-      y: e.targetTouches ? e.targetTouches[0].clientY : e.clientY };
-  };
-
-  // Make an XMLHttpRequest with optional params and a callback when done
-  zap.ez_xhr = function (uri, params, f) {
-    var req = new XMLHttpRequest();
-    if (f === undefined) {
-      f = params;
-      params = {};
-    }
-    req.open(params.method || "GET", uri);
-    if (params.hasOwnProperty("responseType")) {
-      req.responseType = params.responseType;
-    }
-    req.onload = function () {
-      f(req);
-    };
-    req.send(params.data || "");
-  };
-
-  // Return true iff the element only contains text (or has no content at all,
-  // which is the same as the empty string)
-  zap.is_text_only = function (elem) {
-    return !A.some.call(elem.childNodes, function (ch) {
-      return ch.nodeType !== window.Node.TEXT_NODE &&
-        ch.nodeType !== window.Node.CDATA_SECTION;
-    });
-  };
-
+  // Radian to degree conversion
   zap.rad2deg = function (th) {
     return th / Math.PI * 180;
   };
@@ -231,58 +199,6 @@
       }
     }
   };
-
-
-  // Custom events
-
-  // Listen to a custom event. Listener is a function or an object whose
-  // "handleEvent" function will then be invoked.
-  zap.listen = function (target, type, listener) {
-    if (!(target.hasOwnProperty(type))) {
-      target[type] = [];
-    }
-    target[type].push(listener);
-  };
-
-  // Listen to an event only once
-  zap.listen_once = function (target, type, listener) {
-    var h = function (e) {
-      zap.unlisten(target, type, h);
-      if (typeof listener.handleEvent === "function") {
-        listener.handleEvent.call(listener, e);
-      } else {
-        listener(e);
-      }
-    };
-    zap.listen(target, type, h);
-  };
-
-  // Can be called as notify(e), notify(source, type) or notify(source, type, e)
-  zap.notify = function (source, type, e) {
-    if (e) {
-      e.source = source;
-      e.type = type;
-    } else if (type) {
-      e = { source: source, type: type };
-    } else {
-      e = source;
-    }
-    if (e.source.hasOwnProperty(e.type)) {
-      e.source[e.type].slice().forEach(function (listener) {
-        if (typeof listener.handleEvent === "function") {
-          listener.handleEvent.call(listener, e);
-        } else {
-          listener(e);
-        }
-      });
-    }
-  };
-
-  // Stop listening
-  zap.unlisten = function (target, type, listener) {
-    zap.remove_from_array(target[type], listener);
-  };
-
 
   // A layer is any SVG element that contains sprite.
   zap.update_layer = function (layer, dt) {
@@ -440,12 +356,6 @@
       } });
     return cosmos;
   };
-
-  // L10N
-  zap.l = {};
-  A.forEach.call(document.querySelectorAll("[data-l10n]"), function (e) {
-    zap.l[e.dataset.l10n] = zap.is_text_only(e) ? e.textContent : e;
-  });
 
   // Parameters
   A.forEach.call(document.querySelectorAll("[data-param]"), function (p) {
