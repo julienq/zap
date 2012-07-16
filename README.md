@@ -10,10 +10,10 @@ and basic objects.
 Overview
 --------
 
-Include the [zap.js](zap.js) file (preferably at the end of your HTML document),
-as well as the [zap.css](zap.css) stylesheet if necessary (this provides some
-definitions to help with the layout of your page.) You can use the
-[zap.html](zap.html) template as a starting point.
+Include the [zap.js](blob/master/zap.js) file (preferably at the end of your
+HTML document), as well as the [zap.css](blob/master/zap.css) stylesheet if
+necessary (this provides some definitions to help with the layout of your page.)
+You can use the [zap.html](blob/master/zap.html) template as a starting point.
 
 ### The Cosmos and its layers
 
