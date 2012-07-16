@@ -200,6 +200,7 @@
     return min + Math.floor(Math.random() * (max + 1 - min));
   };
 
+  // Return a random integer between -n/2 and n/2
   zap.random_int_around = function (n) {
     return Math.round((n / 2) - Math.random() * (n + 1));
   };
@@ -344,6 +345,7 @@
   zap.make_sprite = function (elem, parent, proto) {
     var sprite = Object.create(proto || sprite_prototype);
     sprite.elem = elem;
+    sprite.sprites = [];
     sprite.x = 0;
     sprite.y = 0;
     sprite.a = 0;
@@ -415,8 +417,11 @@
           zap.update_layer(layer, dt);
         });
         window.requestAnimationFrame(this.update.bind(this));
+        this.updated(dt);
       }
-    }
+    },
+
+    updated: function () {}
   };
 
   zap.make_cosmos = function (proto) {

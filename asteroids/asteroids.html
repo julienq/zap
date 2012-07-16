@@ -15,6 +15,7 @@
             <rect id="bg" width="1600" height="1200"/>
           </clipPath>
           <path id="ship" d="M20,0L-20,15L-10,0L-20,-15Z"/>
+          <circle id="bullet" r="4"/>
           <line id="plume" x1="-2" x2="2"/>
         </defs>
         <g clip-path="url(#clip)">
@@ -36,7 +37,8 @@
       library
     </footer>
 
-    <audio id="hyperspace_sound" src="hyperspace.wav" preload="auto">
+    <audio id="bullet_sound" src="bullet.wav" preload="auto"></audio>
+    <audio id="hyperspace_sound" src="hyperspace.wav" preload="auto"></audio>
 
     <ul class="zap-params">
       <li data-param="ASTEROID_V_MIN" data-num="50">
@@ -53,6 +55,9 @@
       <li data-param="ASTEROID_1_SECTORS" data-num="12">
       <li data-param="ASTEROIDS_MIN" data-num="4">
       <li data-param="ASTEROIDS_MAX" data-num="12">
+      <li data-param="BULLET_RANGE" data-num="600">
+      <li data-param="BULLET_V" data-num="600">
+      <li data-param="FIRE_RATE" data-num="200">
       <li data-param="FLASH_DELAY" data-num="250">
       <li data-param="PLUME_ARC" data-num="60">
       <li data-param="PLUME_P" data-num="0.5">

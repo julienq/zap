@@ -73,6 +73,30 @@ body {
   stroke: #f08;
 }
 
+@-webkit-keyframes blink {
+  from { opacity: 1.0; }
+  to { opacity: 0.0; }
+}
+
+@-moz-keyframes blink {
+  from { opacity: 1.0; }
+  to { opacity: 0.0; }
+}
+
+.hyperspace-0,
+.hyperspace-1,
+.hyperspace-2,
+.hyperspace-3,
+.hyperspace-4,
+.hyperspace-5 {
+  -webkit-animation-name: blink;
+  -webkit-animation-iteration-count: infinite;
+  -webkit-animation-duration: 0.1s;
+  -moz-animation-name: blink;
+  -moz-animation-iteration-count: infinite;
+  -moz-animation-duration: 0.1s;
+}
+
 .roman {
   font-variant: small-caps;
 }

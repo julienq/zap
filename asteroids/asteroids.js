@@ -1,12 +1,49 @@
 (function () {
   "use strict";
 
+  function collide_against(sprite, sprites) {
+    if (sprite.disabled) {
+      return;
+    }
+    for (var i = 0, n = sprites.length; i < n; ++i) {
+      var dx = sprite.x - sprites[i].x;
+      var dy = sprite.y - sprites[i].y;
+      var d = sprite.r_collide + sprites[i].r_collide;
+      if ((dx * dx + dy * dy) < (d * d)) {
+        return sprites[i];
+      }
+    }
+  }
+
   function message(text) {
     document.getElementById("message").textContent = text;
   }
 
   var cosmos = zap.make_cosmos();
   cosmos.vb = document.querySelector("svg").viewBox.baseVal;
+
+  cosmos.updated = function (dt) {
+    this.ship.sprites.forEach(function (bullet) {
+      if (bullet.is_bullet) {
+        var a = collide_against(bullet, this.asteroids.sprites);
+        if (a) {
+          bullet.remove();
+          a.remove();
+          /*
+          var sp = a.split();
+          sp.forEach(function (aa) {
+            a.elem.parentNode.appendChild(aa.elem);
+          });
+          a.remove();
+          play_sound("explosion_asteroid_sound");
+          if (document.getElementById("asteroids").childNodes.length === 0) {
+            cosmos.init_level();
+          }
+          */
+        }
+      }
+    }, this);
+  };
 
   var ur_sprite = Object.create(zap.sprite);
   ur_sprite.set_position = function () {
@@ -42,6 +79,7 @@
   // Make a starry field
   cosmos.init_stars = function () {
     var bg = document.getElementById("background");
+    zap.remove_children(bg);
     for (var i = 0, m = $STAR_DENSITY * this.vb.width * this.vb.height;
         i < m; ++i) {
       bg.appendChild($circle({ r: Math.random() * $STAR_RADIUS,
@@ -79,11 +117,33 @@
     if (this.acceleration > 0 && Math.random() < $PLUME_P) {
       var p = zap.make_sprite($use("#plume"), this, ur_sprite);
       p.ttl = $PLUME_TTL;
-      p.position(this.x + zap.random_int_around($SHIP_R),
-          this.y + zap.random_int_around($SHIP_R),
+      p.position(this.x + zap.random_int_around(this.r),
+          this.y + zap.random_int_around(this.r),
           this.a + 180 + zap.random_int_around($PLUME_ARC));
       p.velocity = $PLUME_VELOCITY;
     }
+  };
+
+  ur_ship.fire = function () {
+    if (this.disabled) {
+      return;
+    }
+    var now = Date.now();
+    if (now - this.last_shot < $FIRE_RATE) {
+      return;
+    }
+    this.last_shot = now;
+    var bullet = zap.make_sprite($use("#bullet"), this, ur_sprite);
+    bullet.is_bullet = true;
+    bullet.r = 0;
+    bullet.r_collide = 0;
+    bullet.ttl = $BULLET_RANGE / $BULLET_V;
+    var th = zap.deg2rad(this.a);
+    bullet.x = this.x + this.r * Math.cos(th);
+    bullet.y = this.y + this.r * Math.sin(th);
+    bullet.vx = $BULLET_V * Math.cos(th);
+    bullet.vy = $BULLET_V * Math.sin(th);
+    zap.play_sound("bullet_sound", $VOLUME);
   };
 
   cosmos.make_ship = function () {
@@ -98,6 +158,8 @@
     }
     this.ship = this.make_ship();
     this.ship.velocity = 0;
+    this.ship.r = $SHIP_R;
+    this.ship.r_collide = $SHIP_R_COLLIDE;
     this.ship.max_velocity = $SHIP_V_MAX;
   };
 
@@ -105,7 +167,7 @@
     document.addEventListener("keydown", function (e) {
       if (e.which === 32) {
         e.preventDefault();
-        // cosmos.ship.fire();
+        this.ship.fire();
       } if (e.which === 37) {
         e.preventDefault();
         this.ship.va = -$SHIP_VA;
@@ -147,6 +209,7 @@
 
   cosmos.hyperspace = function () {
     zap.play_sound("hyperspace_sound", $VOLUME);
+    this.init_stars();
     this.ship.position(zap.random_int(0, this.vb.width),
       zap.random_int(0, this.vb.height), zap.random_int(0, 360));
     flash("hyperspace-{0}".fmt(zap.random_int(0, 5)));
