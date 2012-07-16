@@ -13,6 +13,10 @@ body {
   font-family: Univers, "Helvetica Neue", Helvetica, sans-serif;
 }
 
+.roman {
+  font-variant: small-caps;
+}
+
 a {
   text-decoration: none;
   color: #ffff00;

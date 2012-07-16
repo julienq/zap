@@ -131,9 +131,18 @@
     "hkern", "image", "line", "linearGradient", "marker", "mask", "metadata",
     "mpath", "path", "pattern", "polygon", "polyline", "radialGradient", "rect",
     "set", "stop", "svg", "switch", "symbol", "text", "textPath",
-    "tref", "tspan", "use", "view", "vkern"].forEach(function (tag) {
+    "tref", "tspan", "view", "vkern"].forEach(function (tag) {
     window["$" + tag] = zap.create_element.bind(window.document, "svg:" + tag);
   });
+
+  // $use takes an initial xlink:href attribute to simplify its creation
+  // TODO other elements that use xlink:href
+  window.$use = function (href) {
+    var use = zap.create_element.apply(window.document,
+        ["svg:use"].concat(A.slice.call(arguments, 1)));
+    use.setAttributeNS(zap.XLINK_NS, "href", href);
+    return use;
+  };
 
   // Get clientX/clientY as an object { x: ..., y: ... } for events that may
   // be either a mouse event or a touch event, in which case the position of
@@ -299,6 +308,8 @@
         this.parent.children.splice(this.parent.children.indexOf(this), 1);
       }
       this.elem.parentNode.removeChild(this.elem);
+      delete this.parent;
+      delete this.cosmos;
     },
 
     set_position: function () {},
@@ -358,6 +369,14 @@
     }
     parent.sprites.push(sprite);
     sprite.parent = parent;
+    sprite.cosmos = parent.cosmos;
+    if (!sprite.elem.parentNode) {
+      if (parent instanceof window.Node) {
+        parent.appendChild(sprite.elem);
+      } else {
+        parent.parentNode.appendChild(sprite.elem);
+      }
+    }
     return sprite;
   };
 
@@ -373,7 +392,7 @@
 
     add_layer: function (layer) {
       this.layers.push(layer);
-      layer.parent = this;
+      layer.cosmos = this;
       return layer;
     },
 
