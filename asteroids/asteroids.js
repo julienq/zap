@@ -25,25 +25,35 @@
   cosmos.updated = function (dt) {
     this.ship.sprites.forEach(function (bullet) {
       if (bullet.is_bullet) {
-        var a = collide_against(bullet, this.asteroids.sprites);
-        if (a) {
+        var asteroid = collide_against(bullet, this.asteroids.sprites);
+        if (asteroid) {
           bullet.remove();
-          a.remove();
-          /*
-          var sp = a.split();
-          sp.forEach(function (aa) {
-            a.elem.parentNode.appendChild(aa.elem);
-          });
-          a.remove();
-          play_sound("explosion_asteroid_sound");
-          if (document.getElementById("asteroids").childNodes.length === 0) {
-            cosmos.init_level();
+          asteroid.split();
+          if (this.asteroids.sprites.length === 0) {
+            // finished level!
           }
-          */
         }
       }
     }, this);
+    if (this.shaking > 0) {
+      this.layers.forEach(function (layer) {
+        layer.setAttribute("transform", "translate({0}, {1}) rotate({2})".fmt(
+            zap.random_int_around(this.shaking),
+            zap.random_int_around(this.shaking),
+            zap.random_int_around(this.shaking)));
+      }, this);
+    }
   };
+
+  cosmos.shake = function (dur) {
+    this.shaking = $SHAKE_AMP;
+    setTimeout(function () {
+      this.shaking = 0;
+      this.layers.forEach(function (layer) {
+        layer.removeAttribute("transform");
+      });
+    }.bind(this), $SHAKE_DUR);
+  }
 
   var ur_sprite = Object.create(zap.sprite);
   ur_sprite.set_position = function () {
@@ -53,9 +63,42 @@
     this.y = (this.y + h) % h;
   };
 
+  var ur_asteroid = Object.create(ur_sprite);
+
+  ur_asteroid.split = function () {
+    this.cosmos.shake();
+    zap.play_sound("explosion_asteroid_sound", $VOLUME);
+    for (var i = 0, n = 2 * window["$ASTEROID_{0}_SECTORS".fmt(this.size)];
+        i < n; ++i) {
+      var debris = zap.make_particle($use("#debris"), this.parent,
+          zap.random_int_amp($DEBRIS_TTL, $DEBRIS_TTL_AMP), ur_sprite);
+      var th = Math.random() * 2 * Math.PI;
+      debris.position(this.x + this.r_collide * Math.cos(th),
+          this.y + this.r_collide * Math.sin(th), zap.random_int(0, 360));
+      debris.vx = zap.random_int_signed($ASTEROID_V_MIN, $ASTEROID_V_MAX);
+      debris.vy = zap.random_int_signed($ASTEROID_V_MIN, $ASTEROID_V_MAX);
+      debris.va = zap.random_int_signed($ASTEROID_V_MIN, $ASTEROID_V_MAX) /
+        $ASTEROID_VA_RATE;
+    }
+    if (this.size > 1) {
+      var a1 = this.cosmos.make_asteroid(this.size - 1);
+      a1.position(this.x, this.y);
+      a1.vx = this.vx * $SPEEDUP;
+      a1.vy = -this.vy * $SPEEDUP;
+      a1.va = this.va * $SPEEDUP;
+      var a2 = this.cosmos.make_asteroid(this.size - 1);
+      a2.position(this.x, this.y);
+      a2.vx = -this.vx * $SPEEDUP;
+      a2.vy = this.vy * $SPEEDUP;
+      a2.va = -this.va * $SPEEDUP;
+    }
+    this.remove();
+  }
+
   // Make a new asteroid, size 1, 2, or 3 (from smallest to largest)
   cosmos.make_asteroid = function (size) {
-    var asteroid = zap.make_sprite($path(), this.asteroids, ur_sprite);
+    var asteroid = zap.make_sprite($path(), this.asteroids, ur_asteroid);
+    asteroid.size = size;
     var r = window["$ASTEROID_{0}_R".fmt(size)];
     var r_amp = window["$ASTEROID_{0}_R_AMP".fmt(size)];
     var sectors = window["$ASTEROID_{0}_SECTORS".fmt(size)];

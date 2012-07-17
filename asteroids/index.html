@@ -16,7 +16,8 @@
           </clipPath>
           <path id="ship" d="M20,0L-20,15L-10,0L-20,-15Z"/>
           <circle id="bullet" r="4"/>
-          <line id="plume" x1="-2" x2="2"/>
+          <line id="plume" x1="-5" x2="5"/>
+          <line id="debris" x1="-7" x2="8"/>
         </defs>
         <g clip-path="url(#clip)">
           <g id="background" fill="white"/>
@@ -38,6 +39,8 @@
     </footer>
 
     <audio id="bullet_sound" src="bullet.wav" preload="auto"></audio>
+    <audio id="explosion_asteroid_sound" src="explosion_small.wav"
+      preload="auto"></audio>
     <audio id="hyperspace_sound" src="hyperspace.wav" preload="auto"></audio>
 
     <ul class="zap-params">
@@ -57,18 +60,23 @@
       <li data-param="ASTEROIDS_MAX" data-num="12">
       <li data-param="BULLET_RANGE" data-num="600">
       <li data-param="BULLET_V" data-num="600">
+      <li data-param="DEBRIS_TTL" data-num="1">
+      <li data-param="DEBRIS_TTL_AMP" data-num=".5">
       <li data-param="FIRE_RATE" data-num="200">
       <li data-param="FLASH_DELAY" data-num="250">
       <li data-param="PLUME_ARC" data-num="60">
       <li data-param="PLUME_P" data-num="0.5">
       <li data-param="PLUME_TTL" data-num="0.2">
       <li data-param="PLUME_VELOCITY" data-num="150">
+      <li data-param="SHAKE_AMP" data-num="2">
+      <li data-param="SHAKE_DUR" data-num="250">
       <li data-param="SHIP_ACCELERATION" data-num="50">
       <li data-param="SHIP_DECELERATION" data-num="-5">
       <li data-param="SHIP_R" data-num="20">
       <li data-param="SHIP_R_COLLIDE" data-num="10">
       <li data-param="SHIP_V_MAX" data-num="400">
       <li data-param="SHIP_VA" data-num="200">
+      <li data-param="SPEEDUP" data-num="1.5">
       <li data-param="STAR_DENSITY" data-num="0.0005">
       <li data-param="STAR_RADIUS" data-num="3">
       <li data-param="VOLUME" data-num="0.25">

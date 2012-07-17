@@ -181,6 +181,10 @@
     return Math.round((n / 2) - Math.random() * (n + 1));
   };
 
+  zap.random_int_amp = function (n, amp) {
+    return zap.random_int(Math.floor(n - amp / 2), Math.floor(n + amp / 2));
+  };
+
   // Generate a random integer in the [-max, -min] U [min, max] range
   zap.random_int_signed = function (min, max) {
     return zap.random_int(min, max) * (Math.random() < 0.5 ? -1 : 1);
