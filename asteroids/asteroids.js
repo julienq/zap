@@ -2,8 +2,11 @@
   "use strict";
 
   // Set the string shown by the message
-  function message(text) {
+  function message(text, sound) {
     document.getElementById("message").textContent = text;
+    if (sound) {
+      zap.play_sound(sound, $VOLUME);
+    }
   }
 
   // Flash the screen by setting a class k on the body (which redefines the
@@ -15,7 +18,7 @@
     }, $FLASH_DUR_MS);
   }
 
-  var cosmos = zap.make_cosmos();
+  var cosmos = zap.make_cosmos("cosmos");
   cosmos.vb = document.querySelector("svg").viewBox.baseVal;
 
   var score;
@@ -39,42 +42,24 @@
   // Collide bullets and player ship against asteroids on each tick
   cosmos.updated = function (dt) {
     if (this.ship) {
+      this.layers.lives.sprites.forEach(function (life) {
+        life.position(life.x, life.y,
+          zap.rad2deg(Math.atan2(this.ship.y - life.y, this.ship.x - life.x)));
+      }, this);
       this.ship.sprites.forEach(function (bullet) {
         if (bullet.is_bullet) {
-          var asteroid = bullet.collide_radius(this.asteroids.sprites);
+          var asteroid = bullet.collide_radius(this.layers.asteroids.sprites);
           if (asteroid) {
             bullet.remove();
             this.score += asteroid.score;
             asteroid.split();
-            if (this.asteroids.sprites.length === 0) {
-              // finished level!
+            if (this.layers.asteroids.sprites.length === 0) {
+              //this.start_level();
             }
           }
         }
       }, this);
-      var asteroid = this.ship.collide_radius(this.asteroids.sprites);
-      if (asteroid) {
-        this.ship.explode();
-        delete this.ship;
-        flash("explosion");
-        /*
-        var l = remove_life();
-            if (l > 0) {
-              setTimeout(function () {
-                show_message(READY);
-              }, (EXPLOSION_TTL - EXPLOSION_TTL_AMP) * 1000);
-              setTimeout(function () {
-                show_message("");
-                cosmos.ship.position(cosmos.w / 2, cosmos.h / 2, 0);
-                p.appendChild(cosmos.ship.elem);
-                delete cosmos.ship.disabled;
-              }, (EXPLOSION_TTL + EXPLOSION_TTL_AMP) * 1000);
-            } else {
-              show_message(GAME_OVER, "game_over_sound");
-            }
-          }
-          */
-      }
+      this.player_die(this.ship.collide_radius(this.layers.asteroids.sprites));
     }
     if (this.shaking) {
       this.layers.forEach(function (layer) {
@@ -83,6 +68,29 @@
             zap.random_int_around(this.shaking.amp),
             zap.random_int_around(this.shaking.amp)));
       }, this);
+    }
+  };
+
+  cosmos.player_die = function (asteroid) {
+    if (asteroid) {
+      this.ship.explode();
+      this.remove_life();
+      delete this.ship;
+      flash("explosion");
+      if (this.lives > 0) {
+        window.setTimeout(function () {
+          message($READY);
+          window.setTimeout(function () {
+            message("");
+            this.init_player();
+            this.make_asteroids(this.layers.asteroids.sprites);
+          }.bind(this), $READY_DUR_MS);
+        }.bind(this), $READY_DELAY_MS);
+      } else {
+        window.setTimeout(function () {
+          message($GAME_OVER, "game_over_sound");
+        }, $READY_DELAY_MS);
+      }
     }
   };
 
@@ -154,7 +162,7 @@
 
   // Make a new asteroid, size 1, 2, or 3 (from smallest to largest)
   cosmos.make_asteroid = function (size) {
-    var asteroid = zap.make_sprite($path(), this.asteroids, ur_asteroid);
+    var asteroid = zap.make_sprite($path(), this.layers.asteroids, ur_asteroid);
     asteroid.size = size;
     var r = window["$ASTEROID_{0}_R".fmt(size)];
     var r_amp = window["$ASTEROID_{0}_R_AMP".fmt(size)];
@@ -192,22 +200,27 @@
   };
 
   // Make n asteroids
-  // TODO reset a list of asteroids (for restarting after dying)
   cosmos.make_asteroids = function (n) {
-    if (!this.asteroids) {
-      this.asteroids = this.add_layer(document.getElementById("asteroids"));
-    }
     var r = Math.floor(Math.min(this.vb.width, this.vb.height) / 4);
-    for (var i = 0; i < n; ++i) {
-      var asteroid = this.make_asteroid(3);
-      var th = Math.random() * 2 * Math.PI;
-      var rr = zap.random_int(r, r * 2);
-      asteroid.position(this.vb.width / 2 + rr * Math.cos(th),
-        this.vb.height / 2 + rr * Math.sin(th));
-      asteroid.vx = zap.random_int_signed($ASTEROID_V_MIN, $ASTEROID_V_MAX);
-      asteroid.vy = zap.random_int_signed($ASTEROID_V_MIN, $ASTEROID_V_MAX);
-      asteroid.va = zap.random_int_signed($ASTEROID_V_MIN, $ASTEROID_V_MAX) /
-        $ASTEROID_VA_RATE;
+    if (typeof n === "number") {
+      for (var i = 0; i < n; ++i) {
+        var asteroid = this.make_asteroid(3);
+        var th = Math.random() * 2 * Math.PI;
+        var rr = zap.random_int(r, r * 2);
+        asteroid.position(this.vb.width / 2 + rr * Math.cos(th),
+          this.vb.height / 2 + rr * Math.sin(th));
+        asteroid.vx = zap.random_int_signed($ASTEROID_V_MIN, $ASTEROID_V_MAX);
+        asteroid.vy = zap.random_int_signed($ASTEROID_V_MIN, $ASTEROID_V_MAX);
+        asteroid.va = zap.random_int_signed($ASTEROID_V_MIN, $ASTEROID_V_MAX) /
+          $ASTEROID_VA_RATE;
+      }
+    } else {
+      n.forEach(function (asteroid) {
+        var th = Math.random() * 2 * Math.PI;
+        var rr = zap.random_int(r, r * 2);
+        asteroid.position(this.vb.width / 2 + rr * Math.cos(th),
+          this.vb.height / 2 + rr * Math.sin(th));
+      }, this);
     }
   };
 
@@ -216,6 +229,8 @@
 
   ur_ship.explosion_sound = "explosion_ship_sound";
   ur_ship.debris = $SHIP_DEBRIS;
+  ur_ship.r = $SHIP_R;
+  ur_ship.r_collide = $SHIP_R_COLLIDE;
 
   ur_ship.set_position = function () {
     ur_sprite.set_position.call(this);
@@ -247,20 +262,28 @@
     zap.play_sound("bullet_sound", $VOLUME);
   };
 
-  cosmos.make_ship = function () {
-    var ship = zap.make_sprite($use("#ship"), this.player_layer, ur_ship);
-    ship.position(this.vb.width / 2, this.vb.height / 2, 270);
+  cosmos.make_ship = function (layer) {
+    var ship = zap.make_sprite($use("#ship"), layer, ur_ship);
     return ship;
   };
 
-  cosmos.init_player = function () {
-    if (!this.player_layer) {
-      this.player_layer = cosmos.add_layer(document.getElementById("player"));
+  cosmos.init_lives = function () {
+    this.lives = $LIVES;
+    for (var i = 0; i < $LIVES; ++i) {
+      var life = this.make_ship(this.layers.lives);
+      life.position(3 * life.r * (i + 1), 3 * life.r, 270);
     }
-    this.ship = this.make_ship();
+  };
+
+  cosmos.remove_life = function () {
+    --this.lives;
+    this.layers.lives.sprites[this.lives].explode();
+  };
+
+  cosmos.init_player = function () {
+    this.ship = this.make_ship(this.layers.player);
+    this.ship.position(this.vb.width / 2, this.vb.height / 2, 270);
     this.ship.velocity = 0;
-    this.ship.r = $SHIP_R;
-    this.ship.r_collide = $SHIP_R_COLLIDE;
     this.ship.max_velocity = $SHIP_V_MAX;
   };
 
@@ -307,9 +330,10 @@
 
   cosmos.init_stars();
   cosmos.make_asteroids(4);
+  cosmos.init_lives();
   cosmos.init_player();
   cosmos.init_controls();
   cosmos.running = true;
-  // message("ASTEROIDS");
+  //message("ASTEROIDS");
 
 }());

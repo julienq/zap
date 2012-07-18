@@ -421,6 +421,9 @@
 
     add_layer: function (layer) {
       this.layers.push(layer);
+      if (layer.id) {
+        this.layers[layer.id] = layer;
+      }
       layer.cosmos = this;
       layer.sprites = [];
       return layer;
@@ -441,9 +444,13 @@
     updated: function () {}
   };
 
-  zap.make_cosmos = function (proto) {
+  zap.make_cosmos = function (name, proto) {
     var cosmos = Object.create(proto || zap.cosmos);
     cosmos.layers = [];
+    A.forEach.call(document.querySelectorAll("[data-cosmos=\"{0}\"]".fmt(name)),
+      function (layer) {
+        cosmos.add_layer(layer);
+      });
     var running = false;
     Object.defineProperty(cosmos, "running", { enumerable: true,
       get: function () {
