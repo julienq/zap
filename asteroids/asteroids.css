@@ -13,6 +13,12 @@ body {
   font-family: Univers, "Helvetica Neue", Helvetica, sans-serif;
 }
 
+.explosion {
+  background-image: -moz-linear-gradient(270deg, #f00, #f44);
+  background-image: -webkit-linear-gradient(270deg, #f00, #f44);
+  color: black;
+}
+
 .hyperspace-0 {
   background-image: -moz-linear-gradient(270deg, #024, #08f);
   background-image: -webkit-linear-gradient(270deg, #024, #08f);
@@ -83,6 +89,7 @@ body {
   to { opacity: 0.0; }
 }
 
+.explosion,
 .hyperspace-0,
 .hyperspace-1,
 .hyperspace-2,

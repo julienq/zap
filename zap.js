@@ -317,6 +317,9 @@
     },
 
     remove: function () {
+      while (this.sprites.length > 0) {
+        this.sprites[0].remove();
+      }
       if (this.parent) {
         this.parent.sprites.splice(this.parent.sprites.indexOf(this), 1);
       }
@@ -340,6 +343,21 @@
       }
       zap.update_layer(this, dt);
     },
+
+    // Collide this sprite against a list of other sprites assuming a circular
+    // hit area defined by the r_collide property of each sprite. Return the
+    // first sprite that collides or undefined when there is no collision
+    collide_radius: function (sprites) {
+      for (var i = 0, n = sprites.length; i < n; ++i) {
+        var dx = this.x - sprites[i].x;
+        var dy = this.y - sprites[i].y;
+        var d = this.r_collide + sprites[i].r_collide;
+        if ((dx * dx + dy * dy) < (d * d)) {
+          return sprites[i];
+        }
+      }
+    },
+
   };
 
   // Initialize a sprite with its element, parent (another sprite or a layer)
@@ -378,9 +396,6 @@
         }
       } });
 
-    if (!parent.sprites) {
-      parent.sprites = [];
-    }
     parent.sprites.push(sprite);
     sprite.parent = parent;
     sprite.cosmos = parent.cosmos;
@@ -407,6 +422,7 @@
     add_layer: function (layer) {
       this.layers.push(layer);
       layer.cosmos = this;
+      layer.sprites = [];
       return layer;
     },
 

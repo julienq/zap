@@ -21,8 +21,10 @@
         </defs>
         <g clip-path="url(#clip)">
           <g id="background" fill="white"/>
-          <text font-family="Codystar, sans-serif" id="message"
-            text-anchor="middle" x="800" y="400" font-size="200" fill="yellow"/>
+          <g font-family="Codystar, sans-serif" fill="yellow">
+          <text id="message" text-anchor="middle" x="800" y="400"
+            font-size="200"/>
+          <text id="score" text-anchor="end" x="1580" y="120" font-size="120"/>
           <g id="foreground" stroke-linejoin="round" stroke-linecap="round"
             stroke-width="8" stroke="white" fill="none">
             <g id="asteroids"/>
@@ -41,6 +43,8 @@
     <audio id="bullet_sound" src="bullet.wav" preload="auto"></audio>
     <audio id="explosion_asteroid_sound" src="explosion_small.wav"
       preload="auto"></audio>
+    <audio id="explosion_ship_sound" src="explosion_big.wav"
+      preload="auto"></audio>
     <audio id="hyperspace_sound" src="hyperspace.wav" preload="auto"></audio>
 
     <ul class="zap-params">
@@ -49,12 +53,15 @@
       <li data-param="ASTEROID_VA_RATE" data-num="7">
       <li data-param="ASTEROID_3_R" data-num="60">
       <li data-param="ASTEROID_3_R_AMP" data-num="5">
+      <li data-param="ASTEROID_3_SCORE" data-num="20">
       <li data-param="ASTEROID_3_SECTORS" data-num="16">
       <li data-param="ASTEROID_2_R" data-num="35">
       <li data-param="ASTEROID_2_R_AMP" data-num="5">
+      <li data-param="ASTEROID_2_SCORE" data-num="50">
       <li data-param="ASTEROID_2_SECTORS" data-num="12">
       <li data-param="ASTEROID_1_R" data-num="20">
       <li data-param="ASTEROID_1_R_AMP" data-num="3">
+      <li data-param="ASTEROID_1_SCORE" data-num="100">
       <li data-param="ASTEROID_1_SECTORS" data-num="12">
       <li data-param="ASTEROIDS_MIN" data-num="4">
       <li data-param="ASTEROIDS_MAX" data-num="12">
@@ -63,15 +70,16 @@
       <li data-param="DEBRIS_TTL" data-num="1">
       <li data-param="DEBRIS_TTL_AMP" data-num=".5">
       <li data-param="FIRE_RATE" data-num="200">
-      <li data-param="FLASH_DELAY" data-num="250">
+      <li data-param="FLASH_DUR_MS" data-num="250">
       <li data-param="PLUME_ARC" data-num="60">
       <li data-param="PLUME_P" data-num="0.5">
       <li data-param="PLUME_TTL" data-num="0.2">
       <li data-param="PLUME_VELOCITY" data-num="150">
       <li data-param="SHAKE_AMP" data-num="2">
-      <li data-param="SHAKE_DUR" data-num="250">
+      <li data-param="SHAKE_DUR_MS" data-num="250">
       <li data-param="SHIP_ACCELERATION" data-num="50">
       <li data-param="SHIP_DECELERATION" data-num="-5">
+      <li data-param="SHIP_DEBRIS" data-num="20">
       <li data-param="SHIP_R" data-num="20">
       <li data-param="SHIP_R_COLLIDE" data-num="10">
       <li data-param="SHIP_V_MAX" data-num="400">
