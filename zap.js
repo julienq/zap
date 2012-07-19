@@ -217,6 +217,12 @@
     }
   };
 
+  zap.remove_sprites = function (parent) {
+    while (parent.sprites.length > 0) {
+      parent.sprites[0].remove();
+    }
+  };
+
   // A layer is any SVG element that contains sprite.
   zap.update_layer = function (layer, dt) {
     if (layer.sprites && dt > 0) {
@@ -317,9 +323,7 @@
     },
 
     remove: function () {
-      while (this.sprites.length > 0) {
-        this.sprites[0].remove();
-      }
+      zap.remove_sprites(this);
       if (this.parent) {
         this.parent.sprites.splice(this.parent.sprites.indexOf(this), 1);
       }

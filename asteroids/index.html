@@ -22,9 +22,13 @@
         <g clip-path="url(#clip)">
           <g id="background" fill="white"/>
           <g font-family="Codystar, sans-serif" fill="yellow">
-          <text id="message" text-anchor="middle" x="800" y="400"
-            font-size="200"/>
-          <text id="score" text-anchor="end" x="1580" y="120" font-size="120"/>
+            <text id="message" text-anchor="middle" x="800" y="400"
+              font-size="200"/>
+            <text id="addl-message" text-anchor="middle" x="800" y="600"
+              font-size="120" fill="white"/>
+            <text id="score" text-anchor="end" x="1580" y="120"
+              font-size="120"/>
+          </g>
           <g id="foreground" stroke-linejoin="round" stroke-linecap="round"
             stroke-width="8" stroke="white" fill="none">
             <g id="asteroids" data-cosmos="cosmos"/>
@@ -48,8 +52,10 @@
       preload="auto"></audio>
     <audio id="game_over_sound" src="game_over.wav" preload="auto"></audio>
     <audio id="hyperspace_sound" src="hyperspace.wav" preload="auto"></audio>
+    <audio id="message_sound" src="message.wav" preload="auto"></audio>
 
     <ul class="zap-params">
+      <li data-param="ANY_KEY">Press any key to start</li>
       <li data-param="ASTEROID_V_MIN" data-num="50">
       <li data-param="ASTEROID_V_MAX" data-num="100">
       <li data-param="ASTEROID_VA_RATE" data-num="7">
@@ -74,6 +80,8 @@
       <li data-param="FIRE_RATE" data-num="200">
       <li data-param="FLASH_DUR_MS" data-num="250">
       <li data-param="GAME_OVER">GAME OVER</li>
+      <li data-param="NEW_LIFE" data-num="10000">
+      <li data-param="LEVEL">LEVEL {0}</li>
       <li data-param="LIVES" data-num="3">
       <li data-param="PLUME_ARC" data-num="60">
       <li data-param="PLUME_P" data-num="0.5">
@@ -94,6 +102,7 @@
       <li data-param="SPEEDUP" data-num="1.5">
       <li data-param="STAR_DENSITY" data-num="0.0005">
       <li data-param="STAR_RADIUS" data-num="3">
+      <li data-param="TITLE">ASTEROIDS</li>
       <li data-param="VOLUME" data-num="0.25">
       <li data-param="ZAP_AUDIO_CHANNELS" data-num="32">
     </ul>
