@@ -406,7 +406,7 @@
     if (!sprite.elem.parentNode) {
       if (parent instanceof window.Node) {
         parent.appendChild(sprite.elem);
-      } else {
+      } else if (typeof parent === "object") {
         parent.elem.parentNode.appendChild(sprite.elem);
       }
     }

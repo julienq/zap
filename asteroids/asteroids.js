@@ -60,6 +60,7 @@
 
   // Add one life
   cosmos.add_life = function () {
+    ++this.lives;
     var life = this.make_ship(this.layers.lives);
     life.position(3 * life.r * this.layers.lives.sprites.length, 3 * life.r,
         270);
@@ -76,25 +77,27 @@
   // Check if the player dies from a collision with an asteroid
   // TODO: or a bullet fired from an enemy ship
   cosmos.check_player_die = function (asteroid) {
-    var asteroid = this.ship.collide_radius(this.layers.asteroids.sprites);
-    if (asteroid) {
-      this.ship.explode();
-      delete this.ship;
-      this.layers.lives.sprites[this.layers.lives.sprites.length - 1].explode();
-      flash("explosion");
-      if (this.layers.lives.sprites.length > 0) {
-        window.setTimeout(function () {
-          message($READY);
+    if (this.ship) {
+      var asteroid = this.ship.collide_radius(this.layers.asteroids.sprites);
+      if (asteroid) {
+        this.ship.explode();
+        delete this.ship;
+        this.layers.lives.sprites[this.layers.lives.sprites.length - 1].explode();
+        flash("explosion");
+        if (--this.lives > 0) {
           window.setTimeout(function () {
-            message("");
-            this.init_player();
-          }.bind(this), $READY_DUR_MS);
-        }.bind(this), $READY_DELAY_MS);
-      } else {
-        window.setTimeout(function () {
-          message($GAME_OVER, "game_over_sound");
-          this.any_key();
-        }.bind(this), $READY_DELAY_MS);
+            message($READY);
+            window.setTimeout(function () {
+              message("");
+              this.init_player();
+            }.bind(this), $READY_DUR_MS);
+          }.bind(this), $READY_DELAY_MS);
+        } else {
+          window.setTimeout(function () {
+            message($GAME_OVER, "game_over_sound");
+            this.any_key();
+          }.bind(this), $READY_DELAY_MS);
+        }
       }
     }
   };
@@ -165,6 +168,7 @@
 
   // Initialize lives
   cosmos.init_lives = function () {
+    this.lives = 0;
     for (var i = 0; i < $LIVES; ++i) {
       this.add_life();
     }
@@ -265,7 +269,9 @@
             if (!this.layers.asteroids.sprites.some(function (a) {
               return !a.hasOwnProperty("ttl");
             })) {
+              flash("hyperspace-{0}".fmt(zap.random_int(0, 5)));
               this.ship.remove();
+              this.ship = null;
               ++this.level;
             }
           }
