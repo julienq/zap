@@ -54,6 +54,7 @@
         this.make_asteroids(Math.min(level,
         //this.make_asteroids(Math.min($ASTEROIDS_MIN + level - 1,
             $ASTEROIDS_MAX));
+        this.next_saucer = zap.random_int($SAUCER_T_MIN, $SAUCER_T_MAX);
         this.init_player();
       }.bind(this), $READY_DUR_MS);
     } });
@@ -251,6 +252,20 @@
     }.bind(this), dur) };
   }
 
+  // Instantiate a saucer if its time has come
+  cosmos.saucer = function (dt) {
+    this.next_saucer -= dt * 1000;
+    if (this.next_saucer < 0) {
+      this.next_saucer = zap.random_int($SAUCER_T_MIN, $SAUCER_T_MAX);
+      var saucer = zap.make_sprite($use("#saucer"), this.layers.asteroids,
+          ur_saucer);
+      saucer.r_collide = $SAUCER_R_COLLIDE;
+      saucer.position(0, this.vb.height / 2);
+      saucer.score = $SAUCER_SCORE;
+      saucer.vx = $SAUCER_VX;
+    }
+  };
+
   // Update the world on each tick: check destruction of asteroids or player,
   // shake the screen
   cosmos.updated = function (dt) {
@@ -265,7 +280,11 @@
           if (asteroid) {
             bullet.remove();
             this.score += asteroid.score;
-            asteroid.split();
+            if (asteroid.split) {
+              asteroid.split();
+            } else {
+              asteroid.explode();
+            }
             if (!this.layers.asteroids.sprites.some(function (a) {
               return !a.hasOwnProperty("ttl");
             })) {
@@ -278,6 +297,7 @@
         }
       }, this);
       this.check_player_die();
+      this.saucer(dt);
     }
     if (this.shaking) {
       this.layers.forEach(function (layer) {
@@ -391,7 +411,7 @@
     }
   };
 
-  ur_ship.fire = function () {
+  ur_ship.fire = function (a) {
     var now = Date.now();
     if (now - this.last_shot < $FIRE_RATE) {
       return;
@@ -402,12 +422,21 @@
     bullet.is_bullet = true;
     bullet.r = bullet.r_collide =
       parseFloat(document.getElementById("bullet").getAttribute("r"));
-    var th = zap.deg2rad(this.a);
+    var th = zap.deg2rad(a || this.a);
     bullet.x = this.x + this.r * Math.cos(th);
     bullet.y = this.y + this.r * Math.sin(th);
     bullet.vx = $BULLET_V * Math.cos(th);
     bullet.vy = $BULLET_V * Math.sin(th);
     zap.play_sound("bullet_sound", $VOLUME);
+  };
+
+
+  var ur_saucer = Object.create(ur_ship);
+
+  ur_saucer.set_position = function () {
+    if (this.x < 0 || this.x > this.cosmos.vb.width) {
+      this.remove();
+    }
   };
 
   cosmos.init();
