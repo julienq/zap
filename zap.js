@@ -3,6 +3,8 @@
 
   var A = Array.prototype;
 
+  // Make a single requestAnimationFrame function for convenience.
+  // TODO toggle between actual requestAnimationFrame and setTimeout for testing
   if (!window.requestAnimationFrame) {
     window.requestAnimationFrame = /*window.mozRequestAnimationFrame ||
       window.msRequestAnimationFrame || window.oRequestAnimationFrame ||
@@ -13,6 +15,7 @@
     };
   }
 
+
   // Simple format function for messages and templates. Use {0}, {1}...
   // as slots for parameters. Missing parameters are note replaced.
   String.prototype.fmt = function () {
@@ -22,34 +25,22 @@
     });
   };
 
-  // Another format function for messages and templates; this time, the only
-  // argument is an object and string parameters are keys.
-  String.prototype.format = function (args) {
-    return this.replace(/\{([^}]*)\}/g, function (s, p) {
-      return args.hasOwnProperty(p) ? args[p] : "";
-    });
-  };
 
-  // Useful XML namespaces
+  // Useful XML namespaces for element creation below
   zap.SVG_NS = "http://www.w3.org/2000/svg";
   zap.XHTML_NS = "http://www.w3.org/1999/xhtml";
   zap.XLINK_NS = "http://www.w3.org/1999/xlink";
-  zap.XML_NS = "http://www.w3.org/1999/xml";
-  zap.XMLNS_NS = "http://www.w3.org/2000/xmlns/";
   zap.HTML_NS = zap.XHTML_NS;
-
-  // Return the value constrained between min and max; NaN is converted to 0
-  zap.clamp = function (value, min, max) {
-    return Math.max(Math.min(isNaN(value) ? 0 : value, max), min);
-  };
 
   // Simple way to create elements, giving ns id and class directly within the
   // name of the element (e.g. svg:rect#background.test) Beware of calling this
-  // function with `this` set to the target document.
+  // function with `this` set to the target document. See the $ functions below
+  // for more convenient element creation functions.
   zap.create_element = function (name, maybe_attrs) {
     var argc = 1;
     var attrs = {};
-    if (typeof maybe_attrs === "object" && !(maybe_attrs instanceof window.Node)) {
+    if (typeof maybe_attrs === "object" &&
+        !(maybe_attrs instanceof window.Node)) {
       attrs = maybe_attrs;
       argc = 2;
     }
@@ -93,7 +84,7 @@
     }
   };
 
-  // Shortcut to create elements
+  // Shortcut to create elements, e.g. $("svg#main.zap-content")
   window.$ = function () {
     return zap.create_element.apply(window.document, arguments);
   };
@@ -116,9 +107,11 @@
     window["$" + tag] = zap.create_element.bind(window.document, tag);
   });
 
-  // SVG elements (ommitted: a, color-profile, font-face, font-face-format,
+  // SVG elements (a, color-profile, font-face, font-face-format,
   // font-face-name, font-face-src, font-face-uri, missing-glyph, script, style,
-  // title)
+  // and title are omitted because of clashes with the HTML namespace or lexical
+  // issues with Javascript; elements that have an xlink:href attribute such as
+  // use are defined below.)
   // Cf. http://www.w3.org/TR/SVG/eltindex.html
   ["altGlyph", "altGlyphDef", "altGlyphItem", "animate", "animateColor",
     "animateMotion", "animateTransform", "circle", "clipPath", "cursor", "defs",
@@ -144,22 +137,70 @@
     return use;
   };
 
+
+  // Return the value constrained between min and max; NaN is converted to 0
+  zap.clamp = function (value, min, max) {
+    return Math.max(Math.min(isNaN(value) ? 0 : value, max), min);
+  };
+
   // Degree to radian conversion
   zap.deg2rad = function (a) {
     return a / 180 * Math.PI;
   };
 
-  // Radian to degree conversion
-  zap.rad2deg = function (th) {
-    return th / Math.PI * 180;
+  // Another format function for messages and templates; this time, the only
+  // argument is an object and string parameters are keys.
+  zap.format = function (string, args) {
+    return string.replace(/\{([^}]*)\}/g, function (s, p) {
+      return args.hasOwnProperty(p) ? args[p] : "";
+    });
   };
 
   // Pad a string to the given length with the given padding (defaults to 0)
   zap.pad = function(string, length, padding) {
-    if (typeof padding !== "string") padding = "0";
-    if (typeof string !== "string") string = string.toString();
+    if (typeof padding !== "string") {
+      padding = "0";
+    }
+    if (typeof string !== "string") {
+      string = string.toString();
+    }
     var l = length + 1 - string.length;
     return l > 0 ? (Array(l).join(padding)) + string : string;
+  };
+
+  // Init audio (this is adapted from Perlenspiel)
+  // If the ZAP_AUDIO_CHANNELS parameter is not set, we assume no audio
+  zap.play_sound = (function () {
+    if (typeof $ZAP_AUDIO_CHANNELS !== "number") {
+      return;
+    }
+    var channels = [];
+    for (var i = 0; i < $ZAP_AUDIO_CHANNELS; ++i) {
+      channels[i] = new Audio();
+      channels[i]._done = -1;
+    }
+    return function (id, volume) {
+      var sound = document.getElementById(id);
+      if (volume >= 0 && volume <= 1) {
+        sound.volume = volume;
+      }
+      for (var i = 0; i < $ZAP_AUDIO_CHANNELS; ++i) {
+        var t = Date.now();
+        var channel = channels[i];
+        if (channel._done < t) {
+          channel._done = t + (sound.duration * 1000);
+          channel.audio = sound;
+          sound.load();
+          sound.play();
+          return;
+        }
+      }
+    }
+  }());
+
+  // Radian to degree conversion
+  zap.rad2deg = function (th) {
+    return th / Math.PI * 180;
   };
 
   // Return a random element from an array
@@ -167,7 +208,8 @@
     return a[zap.random_int(a.length - 1)];
   };
 
-  // Return a random integer in the [min, max] range
+  // Return a random integer in the [min, max] range; the range may be a
+  // two-element array
   zap.random_int = function (min, max) {
     if (max === undefined) {
       if (min instanceof Array) {
@@ -181,11 +223,15 @@
     return min + Math.floor(Math.random() * (max + 1 - min));
   };
 
+
+  // TODO review these
+
   // Return a random integer between -n/2 and n/2
   zap.random_int_around = function (n) {
     return Math.round((n / 2) - Math.random() * (n + 1));
   };
 
+  // Return a random integer between n-amp/2 and n+amp/2
   zap.random_int_amp = function (n, amp) {
     return zap.random_int(Math.floor(n - amp / 2), Math.floor(n + amp / 2));
   };
@@ -193,7 +239,7 @@
   // Generate a random integer in the [-max, -min] U [min, max] range
   zap.random_int_signed = function (min, max) {
     return zap.random_int(min, max) * (Math.random() < 0.5 ? -1 : 1);
-  }
+  };
 
   // Return a random number in the [min, max[ range
   zap.random_number = function(min, max) {
@@ -231,12 +277,6 @@
     }
   };
 
-  zap.remove_sprites = function (parent) {
-    while (parent.sprites.length > 0) {
-      parent.sprites[0].remove();
-    }
-  };
-
   // A layer is any SVG element that contains sprite.
   zap.update_layer = function (layer, dt) {
     if (layer.sprites && dt > 0) {
@@ -261,6 +301,7 @@
     return colors[Math.abs(n % colors.length)];
   };
 
+  // Get one out of 20 colors, chosen randomly if no argument is given
   zap.color_20 = function(n) {
     var colors = ["#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78", "#2ca02c",
       "#98df8a", "#d62728", "#ff9896", "#9467bd", "#c5b0d5", "#8c564b",
@@ -293,7 +334,7 @@
     }
   };
 
-  // Convert a color from hsv space (hue in degrees, saturation and brightness
+  // Convert a color from hsv space (hue in radians, saturation and brightness
   // in the [0, 1] range) to an RGB hex value
   zap.hsv_to_hex = function(h, s, v) {
     return zap.rgb_to_hex.apply(this, zap.hsv_to_rgb(h, s, v));
@@ -314,56 +355,15 @@
   };
 
 
+  // Remove sprites from their parent (a layer or a sprite; see below)
+  function remove_sprites() {
+    while (this.sprites.length > 0) {
+      this.sprites[0].remove();
+    }
+  };
+
   // Sprites
   zap.sprite = {
-
-    angle: function (a) {
-      this.a = (a + 360) % 360;
-      this.set_position();
-      this.elem.setAttribute("transform", "translate({x}, {y}) rotate({a})"
-        .format(this));
-    },
-
-    position: function (x, y, a) {
-      this.x = x;
-      this.y = y;
-      if (typeof a === "number") {
-        this.angle(a);
-      } else {
-        this.set_position();
-        this.elem.setAttribute("transform", "translate({x}, {y}) rotate({a})"
-          .format(this));
-      }
-    },
-
-    remove: function () {
-      zap.remove_sprites(this);
-      if (this.parent) {
-        this.parent.sprites.splice(this.parent.sprites.indexOf(this), 1);
-      }
-      this.elem.parentNode.removeChild(this.elem);
-      delete this.parent;
-      delete this.cosmos;
-    },
-
-    set_position: function () {},
-
-    update: function (dt) {
-      this.angular_velocity += this.angular_acceleration;
-      this.velocity += this.acceleration;
-      this.position(this.x + this.vx * dt, this.y + this.vy * dt,
-        this.a + this.va * dt);
-      this.updated(dt);
-      if (this.hasOwnProperty("ttl")) {
-        this.ttl -= dt;
-        if (this.ttl < 0) {
-          this.remove();
-        }
-      }
-      zap.update_layer(this, dt);
-    },
-
-    updated: function () {},
 
     // Collide this sprite against a list of other sprites assuming a circular
     // hit area defined by the r_collide property of each sprite. Return the
@@ -375,55 +375,113 @@
         var d = this.r_collide + sprites[i].r_collide;
         if ((dx * dx + dy * dy) < (d * d)) {
           return sprites[i];
-        } else {
-          var s = this.collide_radius(sprites[i].sprites);
-          if (s) {
-            return s;
-          }
         }
       }
-    }
+    },
+
+    // Update the position (and optionally the angle) and set the transform of
+    // the sprite
+    position: function (x, y, r) {
+      this.x = x;
+      this.y = y;
+      if (typeof r === "number") {
+        this.rotation(r);
+      } else {
+        this.elem.setAttribute("transform",
+            zap.format("translate({x}, {y}) rotate({r})", this));
+      }
+    },
+
+    // Remove this sprite from its parent
+    remove: function () {
+      this.remove_sprites();
+      if (this.parent) {
+        this.parent.sprites.splice(this.parent.sprites.indexOf(this), 1);
+      }
+      this.remove_elem();
+      delete this.parent;
+    },
+
+    // Remove this sprite's element and its children from their parent node
+    remove_elem: function () {
+      if (this.elem.parentNode) {
+        this.elem.parentNode.removeChild(this.elem);
+      }
+      this.sprites.forEach(function (ch) {
+        ch.remove_elem();
+      });
+    },
+
+    // Update the angle and set the transform of the sprite
+    rotation: function (r) {
+      this.r = (r + 360) % 360;
+      this.elem.setAttribute("transform",
+          zap.format("translate({x}, {y}) rotate({r})", this));
+    },
+
+    // Remove all sprites from this sprite
+    remove_sprites: remove_sprites,
+
+    // This is a stub for a function that gets called after the sprite position
+    // has changed
+    set_position: function () {},
+
+    // Update the sprite after dt seconds have passed
+    update: function (dt) {
+      this.d += this.vd * dt;
+      this.v += this.a;
+      this.position(this.x + this.vx * dt, this.y + this.vy * dt,
+        this.r + this.vr * dt);
+      this.updated(dt);
+      if (this.hasOwnProperty("ttl")) {
+        this.ttl -= dt;
+        if (this.ttl < 0) {
+          this.remove();
+        }
+      }
+      zap.update_layer(this, dt);
+    },
+
+    // This is a stub for a function that gets called after the sprite was
+    // updated with the elapsed time in seconds as argument
+    updated: function () {}
   };
 
   // Initialize a sprite with its element, parent (another sprite or a layer)
   zap.make_sprite = function (elem, parent, proto) {
     var sprite = Object.create(proto || zap.sprite);
-    sprite.elem = elem;
-    sprite.sprites = [];
     sprite.x = 0;
     sprite.y = 0;
-    sprite.a = 0;
     sprite.vx = 0;
     sprite.vy = 0;
-    sprite.va = 0;
-
-    var angular_velocity;
-    Object.defineProperty(sprite, "angular_velocity", { enumerable: true,
+    sprite.r = 0;
+    sprite.vr = 0;
+    sprite.d = 0;
+    sprite.vd = 0;
+    sprite.v_min = -Infinity;
+    sprite.v_max = Infinity;
+    var v;
+    Object.defineProperty(sprite, "v", { enumerable: true,
       get: function () {
-        return angular_velocity;
-      }, set: function (v) {
-        if (!isNaN(v)) {
-          angular_velocity =
-            zap.clamp(v, 0, this.max_angular_velocity || Infinity);
+        return v;
+      }, set: function (v_) {
+        if (!isNaN(v_)) {
+          v = zap.clamp(v_, this.v_min, this.v_max);
+          var th = zap.deg2rad(this.d);
+          this.vx = v * Math.cos(th);
+          this.vy = v * Math.sin(th);
         }
       } });
-
-    var velocity;
-    Object.defineProperty(sprite, "velocity", { enumerable: true,
+    Object.defineProperty(sprite, "cosmos", { enumerable: true,
       get: function () {
-        return velocity;
-      }, set: function (v) {
-        if (!isNaN(v)) {
-          velocity = zap.clamp(v, 0, this.max_velocity || Infinity);
-          var th = this.a / 180 * Math.PI;
-          this.vx = velocity * Math.cos(th);
-          this.vy = velocity * Math.sin(th);
+        if (parent) {
+          return parent.cosmos;
         }
       } });
-
+    sprite.elem = elem;
+    sprite.sprites = [];
     parent.sprites.push(sprite);
     sprite.parent = parent;
-    sprite.cosmos = parent.cosmos;
     if (!sprite.elem.parentNode) {
       if (parent instanceof window.Node) {
         parent.appendChild(sprite.elem);
@@ -441,6 +499,7 @@
     return p;
   };
 
+
   // This is the main object for a game
   zap.cosmos = {
 
@@ -451,8 +510,21 @@
       }
       layer.cosmos = this;
       layer.sprites = [];
+      layer.remove_sprites = remove_sprites;
       return layer;
     },
+
+    handleEvent: function (e) {
+      if (e.type === "keydown") {
+        this.keydown(e);
+      } else if (e.type === "keyup") {
+        this.keyup(e);
+      }
+    },
+
+    keydown: function () {},
+
+    keyup: function () {},
 
     update: function (t) {
       if (this.running) {
@@ -487,10 +559,12 @@
           window.requestAnimationFrame(this.update.bind(this));
         }
       } });
+    document.addEventListener("keydown", cosmos, false);
+    document.addEventListener("keyup", cosmos, false);
     return cosmos;
   };
 
-  // Parameters
+  // Initialize parameters
   A.forEach.call(document.querySelectorAll("[data-param]"), function (p) {
     if (p.dataset.hasOwnProperty("num")) {
       window["$" + p.dataset.param] = parseFloat(p.dataset.num);
@@ -503,35 +577,5 @@
       window["$" + p.dataset.param] = p.textContent;
     }
   });
-
-  // Init audio (this is adapted from Perlenspiel)
-  // If the ZAP_AUDIO_CHANNELS parameter is not set, we assume no audio
-  zap.play_sound = (function () {
-    if (typeof $ZAP_AUDIO_CHANNELS !== "number") {
-      return;
-    }
-    var channels = [];
-    for (var i = 0; i < $ZAP_AUDIO_CHANNELS; ++i) {
-      channels[i] = new Audio();
-      channels[i]._done = -1;
-    }
-    return function (id, volume) {
-      var sound = document.getElementById(id);
-      if (volume >= 0 && volume <= 1) {
-        sound.volume = volume;
-      }
-      for (var i = 0; i < $ZAP_AUDIO_CHANNELS; ++i) {
-        var t = Date.now();
-        var channel = channels[i];
-        if (channel._done < t) {
-          channel._done = t + (sound.duration * 1000);
-          channel.audio = sound;
-          sound.load();
-          sound.play();
-          return;
-        }
-      }
-    }
-  }());
 
 }(window.zap = {}));
