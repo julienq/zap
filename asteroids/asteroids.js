@@ -36,6 +36,7 @@
     set: function (s) {
       if ((score % $NEW_LIFE) > (s % $NEW_LIFE)) {
         this.add_life();
+        zap.play_sound("new_life_sound", $VOLUME);
       }
       score = s;
       document.getElementById("score").textContent = score.toString();
@@ -51,10 +52,9 @@
       message($LEVEL.fmt(level), "message_sound");
       window.setTimeout(function () {
         message("");
-        this.make_asteroids(Math.min(level,
-        //this.make_asteroids(Math.min($ASTEROIDS_MIN + level - 1,
+        this.make_asteroids(Math.min($ASTEROIDS_MIN + level - 1,
             $ASTEROIDS_MAX));
-        this.next_saucer = zap.random_int($SAUCER_T_MIN, $SAUCER_T_MAX);
+        this.next_saucer = zap.random_int($SAUCER_T);
         this.init_player();
       }.bind(this), $READY_DUR_MS);
     } });
@@ -79,17 +79,21 @@
   // TODO: or a bullet fired from an enemy ship
   cosmos.check_player_die = function (asteroid) {
     if (this.ship) {
-      var asteroid = this.ship.collide_radius(this.layers.asteroids.sprites);
+      var asteroid = this.ship.collide_radius(this.layers.asteroids.sprites) ||
+        this.ship.collide_radius(this.layers.saucers.sprites) ||
+        this.ship.collide_radius(this.layers.bullets.sprites);
       if (asteroid) {
         this.ship.explode();
         delete this.ship;
-        this.layers.lives.sprites[this.layers.lives.sprites.length - 1].explode();
+        this.layers.lives.sprites[this.layers.lives.sprites.length - 1]
+          .explode();
         flash("explosion");
         if (--this.lives > 0) {
           window.setTimeout(function () {
             message($READY);
             window.setTimeout(function () {
               message("");
+              zap.remove_sprites(this.layers.saucers);
               this.init_player();
             }.bind(this), $READY_DUR_MS);
           }.bind(this), $READY_DELAY_MS);
@@ -159,6 +163,8 @@
         } else if (e.which === 40) {
           e.preventDefault();
           this.hyperspace();
+        } else if (e.which === 83) {
+          this.next_saucer = 0;
         }
       } else if (this.can_start) {
         e.preventDefault();
@@ -256,13 +262,18 @@
   cosmos.saucer = function (dt) {
     this.next_saucer -= dt * 1000;
     if (this.next_saucer < 0) {
-      this.next_saucer = zap.random_int($SAUCER_T_MIN, $SAUCER_T_MAX);
-      var saucer = zap.make_sprite($use("#saucer"), this.layers.asteroids,
+      this.next_saucer = zap.random_int($SAUCER_T);
+      var saucer = zap.make_sprite($use("#saucer"), this.layers.saucers,
           ur_saucer);
+      saucer.r = $SAUCER_R;
       saucer.r_collide = $SAUCER_R_COLLIDE;
-      saucer.position(0, this.vb.height / 2);
+      saucer.x = 0; // Math.random() < 0.5 ? 0 : this.vb.width;
+      saucer.y = zap.random_number($SAUCER_Y) * this.vb.height;
+      saucer.a = zap.random_int($SAUCER_A);
+      saucer.velocity = zap.random_int($SAUCER_VELOCITY) *
+        (saucer.x === 0 ? 1 : -1);
       saucer.score = $SAUCER_SCORE;
-      saucer.vx = $SAUCER_VX;
+      saucer.next_shot = zap.random_int($SAUCER_T_FIRE);
     }
   };
 
@@ -274,25 +285,24 @@
         life.position(life.x, life.y,
           zap.rad2deg(Math.atan2(this.ship.y - life.y, this.ship.x - life.x)));
       }, this);
-      this.ship.sprites.forEach(function (bullet) {
-        if (bullet.is_bullet) {
-          var asteroid = bullet.collide_radius(this.layers.asteroids.sprites);
-          if (asteroid) {
-            bullet.remove();
-            this.score += asteroid.score;
-            if (asteroid.split) {
-              asteroid.split();
-            } else {
-              asteroid.explode();
-            }
-            if (!this.layers.asteroids.sprites.some(function (a) {
-              return !a.hasOwnProperty("ttl");
-            })) {
-              flash("hyperspace-{0}".fmt(zap.random_int(0, 5)));
-              this.ship.remove();
-              this.ship = null;
-              ++this.level;
-            }
+      this.layers.bullets.sprites.forEach(function (bullet) {
+        var asteroid = bullet.collide_radius(this.layers.asteroids.sprites) ||
+          bullet.collide_radius(this.layers.saucers.sprites);
+        if (asteroid) {
+          bullet.remove();
+          this.score += asteroid.score;
+          if (asteroid.split) {
+            asteroid.split();
+          } else {
+            asteroid.explode();
+          }
+          if (!this.layers.asteroids.sprites.some(function (a) {
+            return !a.hasOwnProperty("ttl");
+          })) {
+            flash("hyperspace-{0}".fmt(zap.random_int(0, 5)));
+            this.ship.remove();
+            this.ship = null;
+            ++this.level;
           }
         }
       }, this);
@@ -417,10 +427,9 @@
       return;
     }
     this.last_shot = now;
-    var bullet = zap.make_particle($use("#bullet"), this,
+    var bullet = zap.make_particle($use("#bullet"), this.cosmos.layers.bullets,
         $BULLET_RANGE / $BULLET_V, ur_sprite);
-    bullet.is_bullet = true;
-    bullet.r = bullet.r_collide =
+    bullet.r_collide =
       parseFloat(document.getElementById("bullet").getAttribute("r"));
     var th = zap.deg2rad(a || this.a);
     bullet.x = this.x + this.r * Math.cos(th);
@@ -435,7 +444,16 @@
 
   ur_saucer.set_position = function () {
     if (this.x < 0 || this.x > this.cosmos.vb.width) {
+      delete this.next_shot;
       this.remove();
+    }
+  };
+
+  ur_saucer.updated = function (dt) {
+    this.next_shot -= dt * 1000;
+    if (this.next_shot < 0) {
+      this.fire(zap.random_int(360));
+      this.next_shot = zap.random_int($SAUCER_T_FIRE);
     }
   };
 

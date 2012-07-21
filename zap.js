@@ -170,8 +170,13 @@
   // Return a random integer in the [min, max] range
   zap.random_int = function (min, max) {
     if (max === undefined) {
-      max = min;
-      min = 0;
+      if (min instanceof Array) {
+        max = min[1];
+        min = min[0];
+      } else {
+        max = min;
+        min = 0;
+      }
     }
     return min + Math.floor(Math.random() * (max + 1 - min));
   };
@@ -192,6 +197,15 @@
 
   // Return a random number in the [min, max[ range
   zap.random_number = function(min, max) {
+    if (max === undefined) {
+      if (min instanceof Array) {
+        max = min[1];
+        min = min[0];
+      } else {
+        max = min;
+        min = 0;
+      }
+    }
     return min + Math.random() * (max - min);
   };
 
@@ -339,6 +353,7 @@
       this.velocity += this.acceleration;
       this.position(this.x + this.vx * dt, this.y + this.vy * dt,
         this.a + this.va * dt);
+      this.updated(dt);
       if (this.hasOwnProperty("ttl")) {
         this.ttl -= dt;
         if (this.ttl < 0) {
@@ -347,6 +362,8 @@
       }
       zap.update_layer(this, dt);
     },
+
+    updated: function () {},
 
     // Collide this sprite against a list of other sprites assuming a circular
     // hit area defined by the r_collide property of each sprite. Return the
@@ -358,10 +375,14 @@
         var d = this.r_collide + sprites[i].r_collide;
         if ((dx * dx + dy * dy) < (d * d)) {
           return sprites[i];
+        } else {
+          var s = this.collide_radius(sprites[i].sprites);
+          if (s) {
+            return s;
+          }
         }
       }
-    },
-
+    }
   };
 
   // Initialize a sprite with its element, parent (another sprite or a layer)
@@ -473,6 +494,11 @@
   A.forEach.call(document.querySelectorAll("[data-param]"), function (p) {
     if (p.dataset.hasOwnProperty("num")) {
       window["$" + p.dataset.param] = parseFloat(p.dataset.num);
+    } else if (p.dataset.hasOwnProperty("range")) {
+      window["$" + p.dataset.param] = p.dataset.range.split(" ")
+        .map(function (n) {
+          return parseFloat(n);
+        });
     } else {
       window["$" + p.dataset.param] = p.textContent;
     }
