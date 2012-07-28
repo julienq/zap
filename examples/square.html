@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Zap | Examples | Square</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="cache-control" content="no-cache">
+    <link rel="stylesheet" href="../zap.css">
+    <style>
+      body { background-color: black; }
+    </style>
+  </head>
+  <body class="zap-frame">
+    <div class="zap-content">
+      <svg class="zap-full" viewBox="-320 -240 640 480" data-running="true">
+        <defs>
+          <clipPath id="clip">
+            <rect id="bg" x="-320" y="-240" width="640" height="480" rx="8"
+              ry="8"/>
+          </clipPath>
+          <linearGradient id="gradient" y2="100%" x2="0%">
+            <stop offset="0%" stop-color="#58d898" />
+            <stop offset="100%" stop-color="#580098" />
+          </linearGradient>
+        </defs>
+        <g clip-path="url(#clip)">
+          <rect x="-320" y="-240" width="640" height="480"
+            fill="url(#gradient)"/>
+            <rect id="square" x="-20" y="-20" width="40" height="40"
+              fill="white" rx="8" ry="8" data-system="sprite"/>
+        </g>
+      </svg>
+    </div>
+    <ul class="zap-params">
+      <li data-param="v" data-num="100">
+    </ul>
+    <script src="../zap.js"></script>
+    <script>
+
+  var cosmos = Object.create(zap.cosmos).init();
+
+    </script>
+  </body>
+</html>
+

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Zap | Examples | Cosmos</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="cache-control" content="no-cache">
+  </head>
+  <body data-running="true">
+    <script src="../zap.js"></script>
+    <script>
+
+  var cosmos = Object.create(zap.cosmos).init();
+  document.addEventListener("keydown", function (e) {
+    if (!zap.is_key_special(e)) {
+      e.preventDefault();
+    }
+    console.log(">", zap.describe_key(e));
+  }, false);
+  document.addEventListener("keyup", function (e) {
+    if (!zap.is_key_special(e)) {
+      e.preventDefault();
+    }
+    console.log("<", zap.describe_key(e));
+  }, false);
+
+    </script>
+  </body>
+</html>
+
