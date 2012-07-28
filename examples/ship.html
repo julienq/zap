@@ -20,25 +20,29 @@ body {
             <stop offset="100%" stop-color="#f49878" />
           </linearGradient>
           <clipPath id="clip">
-            <rect id="bg" width="1600" height="1200"/>
+            <rect id="bg" width="1600" height="1200" rx="40" ry="40"/>
           </clipPath>
-          <line id="plume" x1="-5" x2="5"/>
         </defs>
         <g clip-path="url(#clip)" id="cosmos" data-running="true">
           <rect width="1600" height="1200" fill="url(#gradient)"/>
-          <path id="ship" d="M20,0L-20,15L-10,0L-20,-15Z"
-            stroke-linejoin="round" stroke-linecap="round" stroke-width="8"
-            stroke="white" fill="none" data-system="sprite" data-vmin="0"
-            data-vmax="400" data-radius="20" data-r="270" data-h="270"
-            data-x="800" data-y="600"/>
+          <g stroke-linejoin="round" stroke-linecap="round" stroke-width="8"
+            stroke="white" fill="none">
+            <path id="ship" d="M20,0L-20,15L-10,0L-20,-15Z" data-proto="sprite"
+              data-vmin="0" data-vmax="400" data-radius="20" data-r="270"
+              data-h="270" data-x="800" data-y="600"/>
+              <g id="plume" data-proto="zap.system" fill="white" stroke="none"
+                fill-opacity="0.2"/>
+          </g>
         </g>
       </svg>
     </div>
 
     <ul class="zap-params">
-      <li data-param="PLUME_ARC" data-num="60">
+      <li data-param="PLUME_ARC" data-num="20">
       <li data-param="PLUME_P" data-num="0.5">
-      <li data-param="PLUME_TTL" data-num="0.2">
+      <li data-param="PLUME_TTL" data-range="0.1 0.5">
+      <li data-param="PLUME_N" data-range="1 5">
+      <li data-param="PLUME_R" data-range="2 10">
       <li data-param="SHIP_ACCEL" data-num="900">
       <li data-param="SHIP_DECEL" data-num="-150">
       <li data-param="SHIP_VH" data-num="150">
@@ -47,13 +51,31 @@ body {
     <script src="../zap.js"></script>
     <script>
 
+  var vb = document.querySelector("svg").viewBox.baseVal;
+  var sprite = Object.create(zap.sprite);
+  sprite.did_update = function () {
+    this.x = (this.x + vb.width) % vb.width;
+    this.y = (this.y + vb.height) % vb.height;
+  };
+
   var cosmos = Object.create(zap.cosmos)
     .init(document.getElementById("cosmos"));
 
-  var vb = document.querySelector("svg").viewBox.baseVal;
   cosmos.children.ship.did_update = function () {
-    this.x = (this.x + vb.width) % vb.width;
-    this.y = (this.y + vb.height) % vb.height;
+    sprite.did_update.call(this);
+    if (this.a > 0) {
+      for (var i = 0, n = zap.random_int($PLUME_N); i < n; ++i) {
+        var p = Object.create(sprite)
+          .init($circle({ r: zap.random_int($PLUME_R) } ));
+        p.ttl = zap.random_number($PLUME_TTL);
+        var th = zap.deg2rad(this.h + 180 + zap.random_int_signed($PLUME_ARC));
+        p.v = -this.v;
+        p.h = this.h;
+        p.x = this.x + this.radius * Math.cos(th);
+        p.y = this.y + this.radius * Math.sin(th);
+        cosmos.children.plume.append_child(p);
+      }
+    }
   };
 
   document.addEventListener("keydown", function (e) {

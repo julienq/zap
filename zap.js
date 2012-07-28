@@ -441,6 +441,8 @@
 
   zap.system = {
 
+    append_child: append_child,
+
     init: function (elem) {
       this.elem = elem;
       this.children = [];
@@ -449,7 +451,7 @@
       this.r = 0;
       this.s = 1;
       for (var a in elem.dataset) {
-        if (elem.dataset.hasOwnProperty(a) && a !== "system") {
+        if (elem.dataset.hasOwnProperty(a) && a !== "proto") {
           var v = parseFloat(elem.dataset[a]);
           if (isNaN(v)) {
             this[a] = elem.dataset[a];
@@ -482,7 +484,13 @@
       this.will_update(dt);
       this.children.forEach(function (ch) {
         ch.update(dt);
-      });
+        if (typeof ch.ttl === "number") {
+          ch.ttl -= dt;
+          if (ch.ttl <= 0) {
+            this.remove_child(ch);
+          }
+        }
+      }, this);
       this.did_update(dt);
       if (this.elem) {
         this.elem.setAttribute("transform",
@@ -538,28 +546,42 @@
     zap.system.update.call(this, dt);
   };
 
+  function find_proto(p) {
+    var proto = window;
+    var path = p.split(".");
+    for (var i = 0, n = path.length; i < n; ++i) {
+      proto = proto[path[i]];
+      if (typeof proto !== "object") {
+        return;
+      }
+    }
+    return proto;
+  }
+
+  function append_child(ch) {
+    ch.parent = this;
+    this.children.push(ch);
+    if (!ch.elem.parentNode) {
+      this.elem.appendChild(ch.elem);
+    }
+    if (ch.elem.id) {
+      this.children[ch.elem.id] = ch;
+    }
+  }
+
   // This is the main object for a game
   zap.cosmos = {
 
-    append_child: function (ch) {
-      ch.parent = this;
-      this.children.push(ch);
-      if (!ch.elem.parentNode) {
-        this.elem.appendChild(ch.elem);
-      }
-      if (ch.elem.id) {
-        this.children[ch.elem.id] = ch;
-      }
-    },
+    append_child: append_child,
 
     init: function (elem) {
       if (!(elem instanceof window.Node)) {
         elem = document.querySelector("svg") || document.body;
       }
       this.children = [];
-      A.forEach.call(elem.querySelectorAll("[data-system]"), function (elem) {
+      A.forEach.call(elem.querySelectorAll("[data-proto]"), function (elem) {
         zap.fix_dataset(elem);
-        var proto = zap[elem.dataset.system];
+        var proto = find_proto(elem.dataset.proto);
         if (proto) {
           this.append_child(Object.create(proto).init(elem));
         }
