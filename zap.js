@@ -1,5 +1,5 @@
 (function (zap) {
-  "use strict";
+  //"use strict";
 
   var A = Array.prototype;
 
@@ -67,7 +67,7 @@
         if (i >= argc) {
           if (typeof ch === "string") {
             elem.appendChild(this.createTextNode(ch));
-          } else if (ch instanceof Node) {
+          } else if (ch instanceof window.Node) {
             elem.appendChild(ch);
           }
         }
@@ -450,7 +450,12 @@
       this.s = 1;
       for (var a in elem.dataset) {
         if (elem.dataset.hasOwnProperty(a) && a !== "system") {
-          this[a] = elem.dataset[a];
+          var v = parseFloat(elem.dataset[a]);
+          if (isNaN(v)) {
+            this[a] = elem.dataset[a];
+          } else {
+            this[a] = v;
+          }
         }
       }
       return this;
@@ -475,14 +480,14 @@
 
     update: function (dt) {
       this.will_update(dt);
-      if (this.elem) {
-        this.elem.setAttribute("transform",
-          zap.format("translate({x}, {y}) rotate({r}) scale({s})", this));
-      }
       this.children.forEach(function (ch) {
         ch.update(dt);
       });
       this.did_update(dt);
+      if (this.elem) {
+        this.elem.setAttribute("transform",
+          zap.format("translate({x}, {y}) rotate({r}) scale({s})", this));
+      }
     },
 
     did_update: function () {},
@@ -493,12 +498,11 @@
   zap.sprite = Object.create(zap.system);
 
   zap.sprite.init = function (elem) {
-    zap.system.init.call(this, elem);
     var h;
     Object.defineProperty(this, "h", { enumerable: true,
       get: function () { return h; },
-      set: function (h) {
-        h = (h + 360) % 360;
+      set: function (h_) {
+        h = (h_ + 360) % 360;
         this.th = zap.deg2rad(h);
       } });
     this.h = 0;
@@ -506,7 +510,9 @@
     this.v = 0;
     this.vmin = -Infinity;
     this.vmax = Infinity;
-    return this;
+    this.vh = 0;
+    this.vr = 0;
+    return zap.system.init.call(this, elem);
   };
 
   // Collide this sprite against a list of other sprites assuming a circular
@@ -525,6 +531,8 @@
 
   zap.sprite.update = function (dt) {
     this.v = zap.clamp(this.v + this.a * dt, this.vmin, this.vmax);
+    this.h += this.vh * dt;
+    this.r += this.vr * dt;
     this.x += this.v * Math.cos(this.th) * dt;
     this.y += this.v * Math.sin(this.th) * dt;
     zap.system.update.call(this, dt);
@@ -545,11 +553,8 @@
     },
 
     init: function (elem) {
-      if (typeof elem !== window.Node) {
+      if (!(elem instanceof window.Node)) {
         elem = document.querySelector("svg") || document.body;
-      }
-      if (elem.viewBox) {
-        this.vb = elem.viewBox.baseVal;
       }
       this.children = [];
       A.forEach.call(elem.querySelectorAll("[data-system]"), function (elem) {

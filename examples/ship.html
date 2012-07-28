@@ -15,15 +15,23 @@ body {
     <div class="zap-content">
       <svg class="zap-full" viewBox="0 0 1600 1200">
         <defs>
+          <linearGradient id="gradient" y2="100%" x2="0%">
+            <stop offset="0%" stop-color="#009878" />
+            <stop offset="100%" stop-color="#f49878" />
+          </linearGradient>
           <clipPath id="clip">
             <rect id="bg" width="1600" height="1200"/>
           </clipPath>
-          <path id="ship" d="M20,0L-20,15L-10,0L-20,-15Z"/>
           <line id="plume" x1="-5" x2="5"/>
         </defs>
-        <g clip-path="url(#clip)" stroke-linejoin="round" stroke-linecap="round"
-          stroke-width="8" stroke="white" fill="none" data-cosmos="cosmos"
-          id="ship"/>
+        <g clip-path="url(#clip)" id="cosmos" data-running="true">
+          <rect width="1600" height="1200" fill="url(#gradient)"/>
+          <path id="ship" d="M20,0L-20,15L-10,0L-20,-15Z"
+            stroke-linejoin="round" stroke-linecap="round" stroke-width="8"
+            stroke="white" fill="none" data-system="sprite" data-vmin="0"
+            data-vmax="400" data-radius="20" data-r="270" data-h="270"
+            data-x="800" data-y="600"/>
+        </g>
       </svg>
     </div>
 
@@ -31,71 +39,47 @@ body {
       <li data-param="PLUME_ARC" data-num="60">
       <li data-param="PLUME_P" data-num="0.5">
       <li data-param="PLUME_TTL" data-num="0.2">
-      <li data-param="PLUME_VELOCITY" data-num="150">
-      <li data-param="SHIP_ACCELERATION" data-num="50">
-      <li data-param="SHIP_DECELERATION" data-num="-5">
-      <li data-param="SHIP_DEBRIS" data-num="20">
-      <li data-param="SHIP_RADIUS" data-num="20">
-      <li data-param="SHIP_V_MIN" data-num="0">
-      <li data-param="SHIP_V_MAX" data-num="400">
-      <li data-param="SHIP_VD" data-num="200">
+      <li data-param="SHIP_ACCEL" data-num="900">
+      <li data-param="SHIP_DECEL" data-num="-150">
+      <li data-param="SHIP_VH" data-num="150">
     </ul>
 
     <script src="../zap.js"></script>
     <script>
 
-  var cosmos = zap.make_cosmos("cosmos");
-  cosmos.vb = document.querySelector("svg").viewBox.baseVal;
+  var cosmos = Object.create(zap.cosmos)
+    .init(document.getElementById("cosmos"));
 
-  cosmos.keydown = function (e) {
-    if (e.which === 37) {
-      this.ship.vd = this.ship.vr = -$SHIP_VD;
-    } else if (e.which === 38) {
-      this.ship.a = $SHIP_ACCELERATION;
-    } else if (e.which === 39) {
-      this.ship.vd = this.ship.vr = $SHIP_VD;
-    }
-  };
-
-  cosmos.keyup = function (e) {
-    if (e.which === 37) {
-      this.ship.vd = this.ship.vr = 0;
-    } else if (e.which === 38) {
-      this.ship.a = $SHIP_DECELERATION;
-    } else if (e.which === 39) {
-      this.ship.vd = this.ship.vr = 0;
-    }
-  };
-
-  var sprite = Object.create(zap.sprite);
-  sprite.updated = function () {
-    var vb = this.cosmos.vb;
+  var vb = document.querySelector("svg").viewBox.baseVal;
+  cosmos.children.ship.did_update = function () {
     this.x = (this.x + vb.width) % vb.width;
     this.y = (this.y + vb.height) % vb.height;
   };
 
-  cosmos.ship = zap.make_sprite($use("#ship"), cosmos.layers.ship);
-  cosmos.ship.radius = $SHIP_RADIUS;
-  cosmos.ship.x = cosmos.vb.width / 2;
-  cosmos.ship.y = cosmos.vb.height / 2;
-  cosmos.ship.d = -90;
-  cosmos.ship.r = -90;
-  cosmos.ship.v = 0;
-  cosmos.ship.v_min = $SHIP_V_MIN;
-  cosmos.ship.v_max = $SHIP_V_MAX;
-  cosmos.ship.updated = function () {
-    sprite.updated.call(this);
-    if (this.a > 0 && Math.random() < $PLUME_P) {
-      var p = zap.make_particle($use("#plume"), this, $PLUME_TTL, sprite);
-      p.x = this.x + zap.random_int_around(this.radius);
-      p.y = this.y + zap.random_int_around(this.radius);
-      p.r = this.d + 180 + zap.random_int_around($PLUME_ARC);
-      p.d = this.d + 180 + zap.random_int_around($PLUME_ARC);
-      p.v = $PLUME_VELOCITY;
+  document.addEventListener("keydown", function (e) {
+    if (!zap.is_key_special(e)) {
+      e.preventDefault();
+      var k = zap.describe_key(e);
+      if (k === "up") {
+        cosmos.children.ship.a = $SHIP_ACCEL;
+      } else if (k === "left") {
+        cosmos.children.ship.vr = -$SHIP_VH;
+        cosmos.children.ship.vh = -$SHIP_VH;
+      } else if (k === "right") {
+        cosmos.children.ship.vr = $SHIP_VH;
+        cosmos.children.ship.vh = $SHIP_VH;
+      }
     }
-  };
+  }, false);
 
-  cosmos.running = true;
+  document.addEventListener("keyup", function (e) {
+    var k = zap.describe_key(e);
+    if (k === "up") {
+      cosmos.children.ship.a = $SHIP_DECEL;
+    } else if (k === "left" || k === "right") {
+      cosmos.children.ship.vr = cosmos.children.ship.vh = 0;
+    }
+  }, false);
 
     </script>
   </body>
