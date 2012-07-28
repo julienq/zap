@@ -3,21 +3,13 @@
 
   var A = Array.prototype;
 
-  // Make a single requestAnimationFrame function for convenience.
-  // TODO toggle between actual requestAnimationFrame and setTimeout for testing
-  if (!window.requestAnimationFrame) {
-    window.requestAnimationFrame = /*window.mozRequestAnimationFrame ||
-      window.msRequestAnimationFrame || window.oRequestAnimationFrame ||
-      window.webkitRequestAnimationFrame ||*/ function (f) {
-      window.setTimeout(function () {
-        f(Date.now());
-      }, 15);
-    };
-  }
+  // Some predefined global parameters
+  window.$ZAP_AUDIO_CHANNELS = 32;
+  window.$ZAP_REQUEST_ANIMATION_FRAME_MS = 15;
 
 
   // Simple format function for messages and templates. Use {0}, {1}...
-  // as slots for parameters. Missing parameters are note replaced.
+  // as slots for parameters.
   String.prototype.fmt = function () {
     var args = [].slice.call(arguments);
     return this.replace(/\{(\d+)\}/g, function (s, p) {
@@ -148,12 +140,94 @@
     return a / 180 * Math.PI;
   };
 
+  // Friendlier description of a key press for a key event, returning an
+  // all-lowercase string of the form "alt+shift+m", "up", "ctrl+space", etc.
+  // Some key values might be numeric if they are not standard
+  zap.describe_key = function (e) {
+    var key = [];
+    ["alt", "ctrl", "meta", "shift"].forEach(function (k) {
+      if (e[k + "Key"]) {
+        key.push(k);
+      }
+    });
+    if (e.keyCode === 8) {
+      key.push("del");
+    } else if (e.keyCode === 9) {
+      key.push("tab");
+    } else if (e.keyCode === 13) {
+      key.push("enter");
+    } else if (e.keyCode === 16) {
+      if (!e.shiftKey) {
+        key.push("shift");
+      }
+    } else if (e.keyCode === 17) {
+      if (!e.ctrlKey) {
+        key.push("ctrl");
+      }
+    } else if (e.keyCode === 18) {
+      if (!e.altKey) {
+        key.push("alt");
+      }
+    } else if (e.keyCode === 27) {
+      key.push("esc");
+    } else if (e.keyCode === 32) {
+      key.push("space");
+    } else if (e.keyCode === 37) {
+      key.push("left");
+    } else if (e.keyCode === 38) {
+      key.push("up");
+    } else if (e.keyCode === 39) {
+      key.push("right");
+    } else if (e.keyCode === 40) {
+      key.push("down");
+    } else if (e.keyCode === 46) {
+      key.push("backspace");
+    } else if (e.keyCode >= 48 && e.keyCode <= 57) {
+      key.push(e.keyCode - 48);
+    } else if (e.keyCode >= 65 && e.keyCode <= 90) {
+      key.push(String.fromCharCode(e.keyCode + 32));
+    } else if (e.keyCode === 91 || e.keyCode === 93 || e.keyCode === 224) {
+      if (!e.metaKey) {
+        key.push("meta");
+      }
+    } else if (e.keyCode >= 112 && e.keyCode <= 123) {
+      key.push("f" + (e.keyCode - 111));
+    } else {
+      key.push("?" + e.keyCode);
+    }
+    return key.join("+");
+  };
+
+  // Fix for elements that do not have a dataset property
+  zap.fix_dataset = function (elem) {
+    if (!elem.dataset) {
+      elem.dataset = {};
+      A.forEach.call(elem.attributes, function (attr) {
+        if (attr.name.substr(0, 5) === "data-") {
+          elem.dataset[attr.name.substr(5)] = attr.value;
+        }
+      });
+    }
+  };
+
   // Another format function for messages and templates; this time, the only
   // argument is an object and string parameters are keys.
   zap.format = function (string, args) {
     return string.replace(/\{([^}]*)\}/g, function (s, p) {
       return args.hasOwnProperty(p) ? args[p] : "";
     });
+  };
+
+  // Test if a key press is special (alt, ctrl or meta)
+  // We may want to leave these alone to not interfere with the browser
+  // shortcuts
+  zap.is_key_special = function (e) {
+    return e.altKey || e.ctrlKey || e.metaKey;
+  };
+
+  // Test if the string p is "true" (tolerating extra whitespace and any case)
+  zap.is_true = function (p) {
+    return typeof p === "string" && p.trim().toLowerCase() === "true";
   };
 
   // Pad a string to the given length with the given padding (defaults to 0)
@@ -169,11 +243,7 @@
   };
 
   // Init audio (this is adapted from Perlenspiel)
-  // If the ZAP_AUDIO_CHANNELS parameter is not set, we assume no audio
   zap.play_sound = (function () {
-    if (typeof $ZAP_AUDIO_CHANNELS !== "number") {
-      return;
-    }
     var channels = [];
     for (var i = 0; i < $ZAP_AUDIO_CHANNELS; ++i) {
       channels[i] = new Audio();
@@ -277,14 +347,27 @@
     }
   };
 
-  // A layer is any SVG element that contains sprite.
-  zap.update_layer = function (layer, dt) {
-    if (layer.sprites && dt > 0) {
-      layer.sprites.forEach(function (sprite) {
-        sprite.update(dt);
-      });
-    }
+  // Replacement for requestAnimationFrame using simply a timer. Set the global
+  // parameter $ZAP_REQUEST_ANIMATION_FRAME_MS to change the delay time
+  // (set to 15ms by default to approximate 60 fps)
+  zap.request_animation_frame = function (f) {
+    window.setTimeout(function () {
+      f(Date.now());
+    }, $ZAP_REQUEST_ANIMATION_FRAME_MS);
   };
+
+  // Toggle between the browser's own requestAnimationFrame and our setTimeout
+  // approximation. This is useful to test browser performance
+  zap.toggle_request_animation_frame = (function () {
+    var r =  window.requestAnimationFrame || window.mozRequestAnimationFrame ||
+      window.msRequestAnimationFrame || window.oRequestAnimationFrame ||
+      window.webkitRequestAnimationFrame || zap.request_animation_frame;
+    window.requestAnimationFrame = r;
+    return function () {
+      window.requestAnimationFrame =
+        window.requestAnimationFrame === r ? zap.request_animation_frame : r;
+    }
+  }());
 
 
   // Color functions
@@ -355,214 +438,158 @@
   };
 
 
-  // Remove sprites from their parent (a layer or a sprite; see below)
-  function remove_sprites() {
-    while (this.sprites.length > 0) {
-      this.sprites[0].remove();
-    }
-  };
 
-  // Sprites
-  zap.sprite = {
+  zap.system = {
 
-    // Collide this sprite against a list of other sprites assuming a circular
-    // hit area defined by the r_collide property of each sprite. Return the
-    // first sprite that collides or undefined when there is no collision
-    collide_radius: function (sprites) {
-      for (var i = 0, n = sprites.length; i < n; ++i) {
-        var dx = this.x - sprites[i].x;
-        var dy = this.y - sprites[i].y;
-        var d = this.r_collide + sprites[i].r_collide;
-        if ((dx * dx + dy * dy) < (d * d)) {
-          return sprites[i];
+    init: function (elem) {
+      this.elem = elem;
+      this.children = [];
+      this.x = 0;
+      this.y = 0;
+      this.r = 0;
+      this.s = 1;
+      for (var a in elem.dataset) {
+        if (elem.dataset.hasOwnProperty(a) && a !== "system") {
+          this[a] = elem.dataset[a];
         }
       }
+      return this;
     },
 
-    // Update the position (and optionally the angle) and set the transform of
-    // the sprite
-    position: function (x, y, r) {
-      this.x = x;
-      this.y = y;
-      if (typeof r === "number") {
-        this.rotation(r);
-      } else {
-        this.elem.setAttribute("transform",
-            zap.format("translate({x}, {y}) rotate({r})", this));
+    remove_child: function (ch) {
+      var index = this.children.indexOf(ch);
+      if (index >= 0) {
+        this.children.splice(index, 1);
+      }
+      ch.parent = null;
+      if (ch.elem.parentNode) {
+        ch.elem.parentNode.removeChild(ch.elem);
       }
     },
 
-    // Remove this sprite from its parent
-    remove: function () {
-      this.remove_sprites();
-      if (this.parent) {
-        this.parent.sprites.splice(this.parent.sprites.indexOf(this), 1);
+    remove_children: function () {
+      while (this.children.length > 0) {
+        this.children[0].remove();
       }
-      this.remove_elem();
-      delete this.parent;
     },
 
-    // Remove this sprite's element and its children from their parent node
-    remove_elem: function () {
-      if (this.elem.parentNode) {
-        this.elem.parentNode.removeChild(this.elem);
-      }
-      this.sprites.forEach(function (ch) {
-        ch.remove_elem();
-      });
-    },
-
-    // Update the angle and set the transform of the sprite
-    rotation: function (r) {
-      this.r = (r + 360) % 360;
-      this.elem.setAttribute("transform",
-          zap.format("translate({x}, {y}) rotate({r})", this));
-    },
-
-    // Remove all sprites from this sprite
-    remove_sprites: remove_sprites,
-
-    // This is a stub for a function that gets called after the sprite position
-    // has changed
-    set_position: function () {},
-
-    // Update the sprite after dt seconds have passed
     update: function (dt) {
-      this.d += this.vd * dt;
-      this.v += this.a;
-      this.position(this.x + this.vx * dt, this.y + this.vy * dt,
-        this.r + this.vr * dt);
-      this.updated(dt);
-      if (this.hasOwnProperty("ttl")) {
-        this.ttl -= dt;
-        if (this.ttl < 0) {
-          this.remove();
-        }
+      this.will_update(dt);
+      if (this.elem) {
+        this.elem.setAttribute("transform",
+          zap.format("translate({x}, {y}) rotate({r}) scale({s})", this));
       }
-      zap.update_layer(this, dt);
+      this.children.forEach(function (ch) {
+        ch.update(dt);
+      });
+      this.did_update(dt);
     },
 
-    // This is a stub for a function that gets called after the sprite was
-    // updated with the elapsed time in seconds as argument
-    updated: function () {}
+    did_update: function () {},
+    will_update: function () {}
+
   };
 
-  // Initialize a sprite with its element, parent (another sprite or a layer)
-  zap.make_sprite = function (elem, parent, proto) {
-    var sprite = Object.create(proto || zap.sprite);
-    sprite.x = 0;
-    sprite.y = 0;
-    sprite.vx = 0;
-    sprite.vy = 0;
-    sprite.r = 0;
-    sprite.vr = 0;
-    sprite.d = 0;
-    sprite.vd = 0;
-    sprite.v_min = -Infinity;
-    sprite.v_max = Infinity;
-    var v;
-    Object.defineProperty(sprite, "v", { enumerable: true,
-      get: function () {
-        return v;
-      }, set: function (v_) {
-        if (!isNaN(v_)) {
-          v = zap.clamp(v_, this.v_min, this.v_max);
-          var th = zap.deg2rad(this.d);
-          this.vx = v * Math.cos(th);
-          this.vy = v * Math.sin(th);
-        }
+  zap.sprite = Object.create(zap.system);
+
+  zap.sprite.init = function (elem) {
+    zap.system.init.call(this, elem);
+    var h;
+    Object.defineProperty(this, "h", { enumerable: true,
+      get: function () { return h; },
+      set: function (h) {
+        h = (h + 360) % 360;
+        this.th = zap.deg2rad(h);
       } });
-    Object.defineProperty(sprite, "cosmos", { enumerable: true,
-      get: function () {
-        if (parent) {
-          return parent.cosmos;
-        }
-      } });
-    sprite.elem = elem;
-    sprite.sprites = [];
-    parent.sprites.push(sprite);
-    sprite.parent = parent;
-    if (!sprite.elem.parentNode) {
-      if (parent instanceof window.Node) {
-        parent.appendChild(sprite.elem);
-      } else if (typeof parent === "object") {
-        parent.elem.parentNode.appendChild(sprite.elem);
+    this.h = 0;
+    this.a = 0;
+    this.v = 0;
+    this.vmin = -Infinity;
+    this.vmax = Infinity;
+    return this;
+  };
+
+  // Collide this sprite against a list of other sprites assuming a circular
+  // hit area defined by the r_collide property of each sprite. Return the
+  // first sprite that collides or undefined when there is no collision
+  zap.sprite.collide_radius = function (sprites) {
+    for (var i = 0, n = sprites.length; i < n; ++i) {
+      var dx = this.x - sprites[i].x;
+      var dy = this.y - sprites[i].y;
+      var d = this.r_collide + sprites[i].r_collide;
+      if ((dx * dx + dy * dy) < (d * d)) {
+        return sprites[i];
       }
     }
-    return sprite;
   };
 
-  // A particle is simply a sprite with its ttl property set
-  zap.make_particle = function (elem, parent, ttl, proto) {
-    var p = zap.make_sprite(elem, parent, proto);
-    p.ttl = ttl;
-    return p;
+  zap.sprite.update = function (dt) {
+    this.v = zap.clamp(this.v + this.a * dt, this.vmin, this.vmax);
+    this.x += this.v * Math.cos(this.th) * dt;
+    this.y += this.v * Math.sin(this.th) * dt;
+    zap.system.update.call(this, dt);
   };
-
 
   // This is the main object for a game
   zap.cosmos = {
 
-    add_layer: function (layer) {
-      this.layers.push(layer);
-      if (layer.id) {
-        this.layers[layer.id] = layer;
+    append_child: function (ch) {
+      ch.parent = this;
+      this.children.push(ch);
+      if (!ch.elem.parentNode) {
+        this.elem.appendChild(ch.elem);
       }
-      layer.cosmos = this;
-      layer.sprites = [];
-      layer.remove_sprites = remove_sprites;
-      return layer;
-    },
-
-    handleEvent: function (e) {
-      if (e.type === "keydown") {
-        this.keydown(e);
-      } else if (e.type === "keyup") {
-        this.keyup(e);
+      if (ch.elem.id) {
+        this.children[ch.elem.id] = ch;
       }
     },
 
-    keydown: function () {},
-
-    keyup: function () {},
+    init: function (elem) {
+      if (typeof elem !== window.Node) {
+        elem = document.querySelector("svg") || document.body;
+      }
+      if (elem.viewBox) {
+        this.vb = elem.viewBox.baseVal;
+      }
+      this.children = [];
+      A.forEach.call(elem.querySelectorAll("[data-system]"), function (elem) {
+        zap.fix_dataset(elem);
+        var proto = zap[elem.dataset.system];
+        if (proto) {
+          this.append_child(Object.create(proto).init(elem));
+        }
+      }, this);
+      var running;
+      Object.defineProperty(this, "running", { enumerable: true,
+        get: function () {
+          return running;
+        }, set: function (p) {
+          running = !!p;
+          this.t_last = Date.now();
+          if (running) {
+            window.requestAnimationFrame(this.update.bind(this));
+          }
+        } });
+      zap.fix_dataset(elem);
+      this.running = zap.is_true(elem.dataset.running);
+      return this;
+    },
 
     update: function (t) {
       if (this.running) {
         var dt = (t - this.t_last) / 1000;
         this.t_last = t;
-        this.layers.forEach(function (layer) {
-          zap.update_layer(layer, dt);
-        });
+        if (dt > 0) {
+          zap.system.update.call(this, dt);
+        }
         window.requestAnimationFrame(this.update.bind(this));
-        this.updated(dt);
       }
     },
 
-    updated: function () {}
+    did_update: function () {},
+    will_update: function () {}
   };
 
-  zap.make_cosmos = function (name, proto) {
-    var cosmos = Object.create(proto || zap.cosmos);
-    cosmos.layers = [];
-    A.forEach.call(document.querySelectorAll("[data-cosmos=\"{0}\"]".fmt(name)),
-      function (layer) {
-        cosmos.add_layer(layer);
-      });
-    var running = false;
-    Object.defineProperty(cosmos, "running", { enumerable: true,
-      get: function () {
-        return running;
-      }, set: function (p) {
-        running = !!p;
-        cosmos.t_last = Date.now();
-        if (running) {
-          window.requestAnimationFrame(this.update.bind(this));
-        }
-      } });
-    document.addEventListener("keydown", cosmos, false);
-    document.addEventListener("keyup", cosmos, false);
-    return cosmos;
-  };
 
   // Initialize parameters
   A.forEach.call(document.querySelectorAll("[data-param]"), function (p) {
