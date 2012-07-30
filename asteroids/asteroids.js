@@ -262,18 +262,20 @@
     document.addEventListener("keydown", function (e) {
       var k = zap.describe_key(e);
       if (this.ship) {
-        if (k === "space") {
-          this.ship.fire();
-          handled = k;
-        } else if (k === "left") {
-          this.ship.vh = this.ship.vr = -$SHIP_VH;
-          handled = k;
-        } else if (k === "up") {
-          this.ship.a = $SHIP_ACCEL;
-          handled = k;
-        } else if (k === "right") {
-          this.ship.vh = this.ship.vr = $SHIP_VH;
-          handled = k;
+        if (this.running) {
+          if (k === "space") {
+            this.ship.fire();
+            handled = k;
+          } else if (k === "left") {
+            this.ship.vh = this.ship.vr = -$SHIP_VH;
+            handled = k;
+          } else if (k === "up") {
+            this.ship.a = $SHIP_ACCEL;
+            handled = k;
+          } else if (k === "right") {
+            this.ship.vh = this.ship.vr = $SHIP_VH;
+            handled = k;
+          }
         }
       } else if (this.can_start && !zap.is_key_special(e)) {
         handled = k;
@@ -285,18 +287,27 @@
     document.addEventListener("keyup", function (e) {
       var k = zap.describe_key(e);
       if (this.ship) {
-        if (k === "left") {
-          this.ship.vh = this.ship.vr = 0;
-        } else if (k === "up") {
-          this.ship.a = $SHIP_DECEL;
-        } else if (k === "right") {
-          this.ship.vh = this.ship.vr = 0;
-        } else if (k === "down") {
-          this.hyperspace();
-        } else if (k === "s") {
-          this.next_saucer = 0;
-        } else if (k === "q") {
-          this.shake($SHAKE_AMP, $SHAKE_DUR_MS);
+        if (this.running) {
+          if (k === "left") {
+            this.ship.vh = this.ship.vr = 0;
+          } else if (k === "up") {
+            this.ship.a = $SHIP_DECEL;
+          } else if (k === "right") {
+            this.ship.vh = this.ship.vr = 0;
+          } else if (k === "down") {
+            this.hyperspace();
+          } else if (k === "s") {
+            this.next_saucer = 0;
+          }
+        }
+        if (k === "p") {
+          if (cosmos.running) {
+            message($PAUSED);
+            cosmos.running = false;
+          } else {
+            message("");
+            cosmos.running = true;
+          }
         }
       } else if (this.can_start && k === handled) {
         cosmos.new_game();
@@ -469,9 +480,5 @@
   message($TITLE, "message_sound");
   cosmos.running = true;
   cosmos.any_key();
-
-/*
-
-  */
 
 }());
