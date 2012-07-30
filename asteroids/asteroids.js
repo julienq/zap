@@ -104,7 +104,12 @@
 
   saucer.radius = $SAUCER_RADIUS;
   saucer.r_collide = $SAUCER_R_COLLIDE;
+  saucer.score = $SAUCER_SCORE;
   saucer.split = sprite.explode;
+
+  saucer.fire = function () {
+    ship.fire.call(this, zap.random_int(360));
+  };
 
   saucer.did_update = function (dt) {
     if (this.x < 0 || this.x > vb.width) {
@@ -113,10 +118,22 @@
     } else {
       this.next_shot -= dt * 1000;
       if (this.next_shot < 0) {
-        this.fire(zap.random_int(360));
+        this.fire();
         this.next_shot = zap.random_int($SAUCER_T_FIRE);
       }
     }
+  };
+
+
+  var small_saucer = Object.create(saucer);
+  small_saucer.score = $SAUCER_SMALL_SCORE;
+
+  small_saucer.fire = function () {
+    var h = cosmos.ship ?
+      zap.rad2deg(Math.atan2(cosmos.ship.y - this.y,
+            zap.random_int_signed(cosmos.ship.radius) + cosmos.ship.x - this.x))
+      : zap.random_int(360);
+    ship.fire.call(this, h);
   };
 
 
@@ -397,14 +414,19 @@
     this.next_saucer -= dt * 1000;
     if (this.next_saucer < 0) {
       this.next_saucer = zap.random_int($SAUCER_T);
-      var s = this.children.saucers.append_child(Object.create(saucer)
+      var p = this.score / $NEW_LIFE;
+      var proto = Math.random() < p ? small_saucer : saucer;
+      var s = this.children.saucers.append_child(Object.create(proto)
           .init($use("#saucer")));
+      if (proto === small_saucer) {
+        s.s = $SAUCER_SMALL_SCALE;
+        s.elem.setAttribute("stroke", "yellow");
+      }
       s.x = Math.random() < 0.5 ? 0 : vb.width;
       s.y = zap.random_number($SAUCER_Y) * vb.height;
       s.r = zap.random_int($SAUCER_R);
       s.h = zap.random_int($SAUCER_R) + (s.x === 0 ? 0 : 180);
       s.v = zap.random_int($SAUCER_VELOCITY);
-      s.score = $SAUCER_SCORE;
       s.next_shot = zap.random_int($SAUCER_T_FIRE);
     }
   };

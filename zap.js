@@ -535,7 +535,7 @@
     for (var i = 0, n = sprites.length; i < n; ++i) {
       var dx = this.x - sprites[i].x;
       var dy = this.y - sprites[i].y;
-      var d = this.r_collide + sprites[i].r_collide;
+      var d = this.r_collide * this.s + sprites[i].r_collide;
       if ((dx * dx + dy * dy) < (d * d)) {
         return sprites[i];
       }
