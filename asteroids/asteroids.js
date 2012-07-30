@@ -131,7 +131,7 @@
   small_saucer.fire = function () {
     var h = cosmos.ship ?
       zap.rad2deg(Math.atan2(cosmos.ship.y - this.y,
-            zap.random_int_signed(cosmos.ship.radius) + cosmos.ship.x - this.x))
+            zap.random_int_signed($SAUCER_OFF) + cosmos.ship.x - this.x))
       : zap.random_int(360);
     ship.fire.call(this, h);
   };
