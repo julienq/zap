@@ -1,5 +1,5 @@
 (function (zap) {
-  //"use strict";
+  "use strict";
 
   var A = Array.prototype;
 
@@ -438,6 +438,11 @@
   };
 
 
+  function init_number_property(obj, prop, n) {
+    if (typeof obj[prop] !== "number") {
+      obj[prop] = n;
+    }
+  }
 
   zap.system = {
 
@@ -446,10 +451,10 @@
     init: function (elem) {
       this.elem = elem;
       this.children = [];
-      this.x = 0;
-      this.y = 0;
-      this.r = 0;
-      this.s = 1;
+      init_number_property(this, "x", 0);
+      init_number_property(this, "y", 0);
+      init_number_property(this, "r", 0);
+      init_number_property(this, "s", 1);
       for (var a in elem.dataset) {
         if (elem.dataset.hasOwnProperty(a) && a !== "proto") {
           var v = parseFloat(elem.dataset[a]);
@@ -476,7 +481,7 @@
 
     remove_children: function () {
       while (this.children.length > 0) {
-        this.children[0].remove();
+        this.remove_child(this.children[0]);
       }
     },
 
@@ -513,13 +518,13 @@
         h = (h_ + 360) % 360;
         this.th = zap.deg2rad(h);
       } });
-    this.h = 0;
-    this.a = 0;
-    this.v = 0;
-    this.vmin = -Infinity;
-    this.vmax = Infinity;
-    this.vh = 0;
-    this.vr = 0;
+    init_number_property(this, "h", 0);
+    init_number_property(this, "a", 0);
+    init_number_property(this, "v", 0);
+    init_number_property(this, "vmin", -Infinity);
+    init_number_property(this, "vmax", Infinity);
+    init_number_property(this, "vh", 0);
+    init_number_property(this, "vr", 0);
     return zap.system.init.call(this, elem);
   };
 
@@ -567,6 +572,7 @@
     if (ch.elem.id) {
       this.children[ch.elem.id] = ch;
     }
+    return ch;
   }
 
   // This is the main object for a game
