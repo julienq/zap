@@ -22,9 +22,9 @@
           <line id="plume" x1="-5" x2="5"/>
           <line id="debris" x1="-7" x2="8"/>
         </defs>
-        <g clip-path="url(#clip)">
+        <g clip-path="url(#clip)" font-family="Codystar, sans-serif">
           <g id="background" fill="white"/>
-          <g font-family="Codystar, sans-serif" fill="yellow">
+          <g fill="yellow">
             <text id="message" text-anchor="middle" x="800" y="400"
               font-size="200"/>
             <text id="addl-message" text-anchor="middle" x="800" y="600"
@@ -36,6 +36,8 @@
             stroke-width="8" stroke="white" fill="none">
             <g id="asteroids" data-proto="zap.system"/>
             <g id="saucers" data-proto="zap.system"/>
+            <g id="points" data-proto="zap.system" fill="yellow" stroke="none"
+              font-size="80" text-anchor="middle"/>
             <g id="lives" data-proto="zap.system" stroke-opacity="0.75"/>
             <g id="player" data-proto="zap.system"/>
             <g id="bullets" data-proto="zap.system"/>
@@ -84,7 +86,9 @@
       <li data-param="FIRE_RATE" data-num="200">
       <li data-param="FLASH_DUR_MS" data-num="250">
       <li data-param="GAME_OVER">GAME OVER</li>
+      <li data-param="HISCORE">HI SCORE: {0}</li>
       <li data-param="NEW_LIFE" data-num="10000">
+      <li data-param="NEW_HI_SCORE">NEW HI SCORE!</li>
       <li data-param="LEVEL">LEVEL {0}</li>
       <li data-param="LIVES" data-num="3">
       <li data-param="PAUSED">PAUSED</li>

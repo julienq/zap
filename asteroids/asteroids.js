@@ -31,6 +31,17 @@
     this.y = (this.y + vb.height) % vb.height;
   };
 
+  function init_debris(ref, debris) {
+    debris.ttl = zap.random_number($DEBRIS_TTL);
+    debris.x = ref.x;
+    debris.y = ref.y;
+    debris.r = zap.random_int(360);
+    debris.h = zap.random_int(360);
+    debris.v = zap.random_int($ASTEROID_V);
+    debris.vr = zap.random_int($ASTEROID_VR);
+    return debris;
+  };
+
   // Both asteroids and spaceships may explode, leaving some debris behind
   // Set the debris property of the sprite to leave debris
   // Set the shake_amp and shake_dur properties to shake the screen as well
@@ -38,15 +49,8 @@
   sprite.explode = function () {
     zap.play_sound(this.explosion_sound, $VOLUME);
     for (var i = 0; i < this.debris; ++i) {
-      var debris = this.parent
-        .append_child(Object.create(sprite).init($use("#debris")));
-      debris.ttl = zap.random_number($DEBRIS_TTL);
-      debris.x = this.x;
-      debris.y = this.y;
-      debris.r = zap.random_int(360);
-      debris.h = zap.random_int(360);
-      debris.v = zap.random_int($ASTEROID_V);
-      debris.vr = zap.random_int($ASTEROID_VR);
+      init_debris(this, this.parent.append_child(Object.create(sprite)
+            .init($use("#debris"))));
     }
     cosmos.shake(this.shake_amp, this.shake_dur);
     this.parent.remove_child(this);
@@ -180,6 +184,8 @@
     } });
   cosmos.score = 0;
 
+  cosmos.hiscore = window.localStorage.getItem("zap:asteroids:hiscore") || 0;
+
   // Setting a new level
   var level;
   Object.defineProperty(cosmos, "level", { enumerable: true,
@@ -208,6 +214,7 @@
 
   // Show a message to "press any key" after a short delay
   cosmos.any_key = function () {
+    document.getElementById("score").textContent = $HISCORE.fmt(this.hiscore);
     window.setTimeout(function () {
       addl_message($ANY_KEY);
       this.can_start = true;
@@ -238,6 +245,11 @@
         } else {
           window.setTimeout(function () {
             message($GAME_OVER, "game_over_sound");
+            if (this.score > this.hiscore) {
+              this.hiscore = this.score;
+              window.localStorage.setItem("zap:asteroids:hiscore", this.score);
+              addl_message($NEW_HI_SCORE);
+            }
             this.any_key();
           }.bind(this), $READY_DELAY_MS);
         }
@@ -440,6 +452,8 @@
           if (a && !a.ttl) {
             bullet.parent.remove_child(bullet);
             this.score += a.score;
+            init_debris(a, this.children.points.append_child(Object.create(sprite)
+              .init($text(a.score.toString()))));
             a.split();
           }
         }
