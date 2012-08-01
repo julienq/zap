@@ -514,7 +514,6 @@
   cosmos.init_controls();
   cosmos.init_stars();
   message($TITLE, "message_sound");
-  cosmos.running = true;
   cosmos.any_key();
 
 }());
