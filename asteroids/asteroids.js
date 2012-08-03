@@ -30,14 +30,16 @@
   }
 
   // Create debris for explosions
-  function init_debris(ref, debris) {
+  function init_debris(ref, debris, unrotate) {
     debris.ttl = zap.random_number($DEBRIS_TTL);
     debris.x = ref.x;
     debris.y = ref.y;
-    debris.r = zap.random_int(360);
     debris.h = zap.random_int(360);
     debris.v = zap.random_int($ASTEROID_V);
     debris.vr = zap.random_int($ASTEROID_VR);
+    if (!unrotate) {
+      debris.r = zap.random_int(360);
+    }
     return debris;
   };
 
@@ -277,7 +279,7 @@
   // Check if the player dies from a collision with an asteroid
   // TODO: or a bullet fired from an enemy ship
   cosmos.check_player_die = function (asteroid) {
-    if (this.ship) {
+    if (this.ship && !this.ship.invicible) {
       var a = this.ship.collide_radius(this.children.asteroids.children) ||
         this.ship.collide_radius(this.children.saucers.children);
       if (a) {
@@ -361,6 +363,15 @@
             this.ship.vh = this.ship.vr = 0;
           } else if (k === "down") {
             this.hyperspace();
+          } else if (k === "i") {
+            this.ship.invicible = !this.ship.invicible;
+            if (this.ship.invicible) {
+              this.ship.elem.setAttribute("stroke-width", "2");
+              this.ship.elem.setAttribute("stroke-dasharray", "2 4");
+            } else {
+              this.ship.elem.removeAttribute("stroke-width");
+              this.ship.elem.removeAttribute("stroke-dasharray");
+            }
           } else if (k === "s") {
             this.next_saucer = 0;
           } else if (k === "x") {
@@ -520,7 +531,7 @@
             bullet.remove_self();
             this.score += a.score;
             init_debris(a, this.children.points.new_child(sprite,
-                $text(a.score.toString())));
+                $text(a.score.toString())), true);
             a.explode();
           }
         }
