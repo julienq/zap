@@ -1,6 +1,8 @@
 (function (zap) {
   "use strict";
 
+  zap.$ = {};  // extension namespace
+
   var A = Array.prototype;
 
   // Some predefined global parameters
@@ -258,6 +260,10 @@
     }
     return function (id, volume) {
       var sound = document.getElementById(id);
+      if (!sound) {
+        console.warn("No sound for id \"{0}\"".fmt(id));
+        return;
+      }
       if (volume >= 0 && volume <= 1) {
         sound.volume = volume;
       }
@@ -451,11 +457,51 @@
     }
   }
 
+  function update(dt) {
+    this.will_update(dt);
+    this.children.forEach(function (ch) {
+      ch.update(dt);
+      if (typeof ch.ttl === "number") {
+        ch.ttl -= dt;
+        if (ch.ttl <= 0) {
+          this.remove_child(ch);
+        }
+      }
+    }, this);
+    this.did_update(dt);
+    if (this.elem) {
+      this.elem.setAttribute("transform",
+        zap.format("translate({x}, {y}) rotate({r}) scale({s})", this));
+    }
+  }
+
   zap.system = {
 
     append_child: append_child,
 
     init: function (elem) {
+      var enabled = true;
+      Object.defineProperty(this, "enabled", { enumerable: true,
+        get: function () { return enabled; },
+        set: function (p) {
+          p = !!p;
+          if (p !== enabled) {
+            enabled = p;
+            if (elem.classList) {
+              if (enabled) {
+                elem.classList.remove("zap--hidden");
+              } else {
+                elem.classList.add("zap--hidden");
+              }
+            } else {
+              if (enabled) {
+                elem.removeAttribute("display");
+              } else {
+                elem.setAttribute("display", "none");
+              }
+            }
+          }
+        } });
       this.elem = elem;
       this.children = [];
       init_number_property(this, "x", 0);
@@ -503,20 +549,8 @@
     },
 
     update: function (dt) {
-      this.will_update(dt);
-      this.children.forEach(function (ch) {
-        ch.update(dt);
-        if (typeof ch.ttl === "number") {
-          ch.ttl -= dt;
-          if (ch.ttl <= 0) {
-            this.remove_child(ch);
-          }
-        }
-      }, this);
-      this.did_update(dt);
-      if (this.elem) {
-        this.elem.setAttribute("transform",
-          zap.format("translate({x}, {y}) rotate({r}) scale({s})", this));
+      if (this.enabled) {
+        update.call(this, dt);
       }
     },
 
@@ -634,7 +668,7 @@
         var dt = (t - this.t_last) / 1000;
         this.t_last = t;
         if (dt > 0) {
-          zap.system.update.call(this, dt);
+          update.call(this, dt);
         }
         window.requestAnimationFrame(this.update.bind(this));
       }

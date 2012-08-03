@@ -14,6 +14,9 @@
           <clipPath id="clip">
             <rect id="bg" width="1600" height="1200"/>
           </clipPath>
+          <clipPath id="scroll-clip">
+            <rect y="700" height="550" width="1600" fill="red"/>
+          </clipPath>
           <path id="ship" d="M20,0L-20,15L-10,0L-20,-15Z"/>
           <path id="saucer" d="M20,-15 40,0 20,15 -20,15 -40,0 -20,-15 -15,-40
             15,-40 20,-15 -20,-15"/>
@@ -24,18 +27,46 @@
         </defs>
         <g clip-path="url(#clip)" font-family="Codystar, sans-serif">
           <g id="background" fill="white"/>
-          <g fill="yellow">
+          <g>
             <text id="message" text-anchor="middle" x="800" y="400"
-              font-size="200"/>
+              font-size="200" fill="yellow"/>
             <text id="addl-message" text-anchor="middle" x="800" y="600"
               font-size="100" fill="white"/>
-            <text id="hiscore" text-anchor="middle" x="800" y="1000"
-              font-size="120" fill="yellow"/>
             <text id="score" text-anchor="end" x="1580" y="120"
-              font-size="120"/>
+              font-size="120" fill="yellow"/>
           </g>
           <g id="cosmos" data-running="true" stroke-linejoin="round"
             stroke-linecap="round" stroke-width="8" stroke="white" fill="none">
+            <g id="scroller" data-proto="zap.$.scroller" stroke="none"
+              data-h="270" text-anchor="middle" data-clip="url(#scroll-clip)"
+              data-enabled="">
+              <g transform="translate(800)" fill="white" font-size="80">
+                <text id="hiscore" font-size="120" fill="yellow"/>
+                <text y="300" font-size="120">Controls</text>
+                <text y="400"><tspan fill="yellow">Left</tspan> and
+                  <tspan fill="yellow">right</tspan> arrows to steer</text>
+                <text y="500"><tspan fill="yellow">Up</tspan> arrow to
+                  thrust</text>
+                <text y="600"><tspan fill="yellow">Space</tspan> to shoot</text>
+                <text y="700"><tspan fill="yellow">Down</tspan> arrow for
+                  hyperspace</text>
+                <text y="800"><tspan fill="yellow">P</tspan> to pause and
+                  resume</text>
+                <text y="1000" font-size="120">Scoring</text>
+                <text y="1100">Large asteroid: <tspan fill="yellow">20</tspan>
+                  points</text>
+                <text y="1200">Medium asteroid: <tspan fill="yellow">50</tspan>
+                  points</text>
+                <text y="1300">Small asteroid: <tspan fill="yellow">100</tspan>
+                  points</text>
+                <text y="1400">Large saucer: <tspan fill="yellow">200</tspan>
+                  points</text>
+                <text y="1500">Small saucer: <tspan fill="yellow">1000</tspan>
+                  points</text>
+                <text y="1600">New life every <tspan fill="yellow">10000</tspan>
+                  points</text>
+              </g>
+            </g>
             <g id="asteroids" data-proto="zap.system"/>
             <g id="saucers" data-proto="zap.system"/>
             <g id="points" data-proto="zap.system" fill="yellow" stroke="none"
@@ -112,6 +143,9 @@
       <li data-param="SAUCER_SCORE" data-num="200">
       <li data-param="SAUCER_VELOCITY" data-range="150 300">
       <li data-param="SAUCER_Y" data-range="0.25 0.75">
+      <li data-param="SCROLL_DELAY_MS" data-num="2000">
+      <li data-param="SCROLL_V" data-num="70">
+      <li data-param="SCROLL_Y" data-num="1000">
       <li data-param="SHAKE_AMP" data-num="2">
       <li data-param="SHAKE_DUR_MS" data-num="250">
       <li data-param="SHIP_ACCEL" data-num="900">

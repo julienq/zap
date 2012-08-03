@@ -42,6 +42,34 @@
   };
 
 
+  zap.$.scroller = Object.create(zap.sprite);
+
+  zap.$.scroller.reset = function () {
+    this.elem.parentNode.setAttribute("clip-path", this.clip);
+    this.y = $SCROLL_Y;
+    this.v = 0;
+    this.enabled = true;
+    window.setTimeout(function () {
+      this.v = $SCROLL_V;
+    }.bind(this), $SCROLL_DELAY_MS);
+  };
+
+  zap.$.scroller.did_update = function () {
+    var h = this.elem.getBBox().height;
+    if (this.y < -h) {
+      this.reset();
+    }
+  };
+
+  zap.$.scroller.stop = function () {
+    this.elem.parentNode.removeAttribute("clip-path");
+    this.y = $SCROLL_Y;
+    this.v = 0;
+    this.enabled = false;
+  };
+
+
+
   var vb = document.querySelector("svg").viewBox.baseVal;
 
   // Basic sprite: same as a regular sprite but wraps around the screen
@@ -114,7 +142,6 @@
   saucer.radius = $SAUCER_RADIUS;
   saucer.r_collide = $SAUCER_R_COLLIDE;
   saucer.score = $SAUCER_SCORE;
-  saucer.split = sprite.explode;
 
   saucer.fire = function () {
     sprite.fire.call(this, zap.random_int(360));
@@ -177,7 +204,7 @@
 
   // Asteroids split into two smaller asteroids with perpendicular direction and
   // higher speed
-  asteroid.split = function () {
+  asteroid.explode = function () {
     if (this.size > 1) {
       var a1 = cosmos.make_asteroid(this.size - 1);
       a1.x = this.x;
@@ -190,7 +217,7 @@
       a2.h = this.h - 90;
       a2.v = this.v * $SPEEDUP;
     }
-    this.explode();
+    sprite.explode.call(this);
   };
 
   var cosmos = zap.make(zap.cosmos, document.getElementById("cosmos"));
@@ -241,6 +268,7 @@
   cosmos.any_key = function () {
     window.setTimeout(function () {
       addl_message($ANY_KEY);
+      this.children.scroller.reset();
       hiscore(this.hiscore);
       this.can_start = true;
     }.bind(this), $READY_DELAY_MS);
@@ -335,6 +363,15 @@
             this.hyperspace();
           } else if (k === "s") {
             this.next_saucer = 0;
+          } else if (k === "x") {
+            var enemies = cosmos.children.asteroids.children.slice()
+              .concat(cosmos.children.saucers.children.slice());
+            enemies.forEach(function (a) {
+              if (a.explosion_sound) {
+                this.score += a.score;
+                a.explode();
+              }
+            }, this);
           }
         }
         if (k === "p") {
@@ -446,6 +483,7 @@
   cosmos.new_game = function () {
     message("");
     addl_message("");
+    this.children.scroller.stop();
     hiscore();
     this.score = 0;
     this.init_lives();
@@ -483,7 +521,7 @@
             this.score += a.score;
             init_debris(a, this.children.points.new_child(sprite,
                 $text(a.score.toString())));
-            a.split();
+            a.explode();
           }
         }
       }, this);
@@ -492,7 +530,7 @@
           var a = bullet.collide_radius(this.children.asteroids.children);
           if (a && !a.ttl) {
             bullet.remove_self();
-            a.split();
+            a.explode();
           }
         }
       }, this);
