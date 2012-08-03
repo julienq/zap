@@ -6,6 +6,12 @@
     document.getElementById("addl-message").textContent = text;
   }
 
+  // Show/hide the highscore
+  function hiscore(score) {
+    document.getElementById("hiscore").textContent = score ?
+      $HISCORE.fmt(score) : "";
+  }
+
   // Set the string shown by the message
   function message(text, sound) {
     document.getElementById("message").textContent = text;
@@ -23,14 +29,7 @@
     }, $FLASH_DUR_MS);
   }
 
-
-  var vb = document.querySelector("svg").viewBox.baseVal;
-  var sprite = Object.create(zap.sprite);
-  sprite.did_update = function () {
-    this.x = (this.x + vb.width) % vb.width;
-    this.y = (this.y + vb.height) % vb.height;
-  };
-
+  // Create debris for explosions
   function init_debris(ref, debris) {
     debris.ttl = zap.random_number($DEBRIS_TTL);
     debris.x = ref.x;
@@ -42,36 +41,38 @@
     return debris;
   };
 
-  // Both asteroids and spaceships may explode, leaving some debris behind
+
+  var vb = document.querySelector("svg").viewBox.baseVal;
+
+  // Basic sprite: same as a regular sprite but wraps around the screen
+  var sprite = Object.create(zap.sprite);
+
+  sprite.did_update = function () {
+    this.x = (this.x + vb.width) % vb.width;
+    this.y = (this.y + vb.height) % vb.height;
+  };
+
+  // Sprites may explode, leaving some debris behind
   // Set the debris property of the sprite to leave debris
   // Set the shake_amp and shake_dur properties to shake the screen as well
-  // Set the explision_sound property for sound
+  // Set the explosion_sound property for sound
   sprite.explode = function () {
     zap.play_sound(this.explosion_sound, $VOLUME);
     for (var i = 0; i < this.debris; ++i) {
-      init_debris(this, this.parent.append_child(Object.create(sprite)
-            .init($use("#debris"))));
+      init_debris(this, this.parent.new_child(sprite, $use("#debris")));
     }
     cosmos.shake(this.shake_amp, this.shake_dur);
-    this.parent.remove_child(this);
+    this.remove_self();
   };
 
-  var ship = Object.create(sprite);
-  ship.explosion_sound = "explosion_ship_sound";
-  ship.debris = $SHIP_DEBRIS;
-  ship.radius = $SHIP_RADIUS;
-  ship.r_collide = $SHIP_R_COLLIDE;
-  ship.vmin = $SHIP_VMIN;
-  ship.vmax = $SHIP_VMAX;
-
-  ship.fire = function (h) {
+  // Fire a shot at the given heading
+  sprite.fire = function (h) {
     var now = Date.now();
     if (now - this.last_shot < $FIRE_RATE) {
       return;
     }
     this.last_shot = now;
-    var bullet = this.parent.append_child(Object.create(sprite)
-        .init($use("#bullet")));
+    var bullet = this.parent.new_child(sprite, $use("#bullet"));
     bullet.ttl = $BULLET_RANGE / $BULLET_V;
     bullet.r_collide =
       parseFloat(document.getElementById("bullet").getAttribute("r"));
@@ -83,12 +84,20 @@
     zap.play_sound("bullet_sound", $VOLUME);
   };
 
+  var ship = Object.create(sprite);
+  ship.explosion_sound = "explosion_ship_sound";
+  ship.debris = $SHIP_DEBRIS;
+  ship.radius = $SHIP_RADIUS;
+  ship.r_collide = $SHIP_R_COLLIDE;
+  ship.vmin = $SHIP_VMIN;
+  ship.vmax = $SHIP_VMAX;
+
   // The ship produces a plume when it accelerates
   ship.will_update = function (dt) {
     if (this.a > 0) {
       for (var i = 0, n = zap.random_int($PLUME_N); i < n; ++i) {
-        var p = this.parent.append_child(Object.create(sprite)
-          .init($circle({ r: zap.random_int($PLUME_R) } )));
+        var p = this.parent.new_child(sprite,
+            $circle({ r: zap.random_int($PLUME_R) } ));
         p.elem.setAttribute("opacity", Math.random());
         p.ttl = zap.random_number($PLUME_TTL);
         var th = zap.deg2rad(this.h + 180 + zap.random_int_signed($PLUME_ARC));
@@ -108,13 +117,13 @@
   saucer.split = sprite.explode;
 
   saucer.fire = function () {
-    ship.fire.call(this, zap.random_int(360));
+    sprite.fire.call(this, zap.random_int(360));
   };
 
   saucer.did_update = function (dt) {
     if (this.x < 0 || this.x > vb.width) {
       delete this.next_shot;
-      this.parent.remove_child(this);
+      this.remove_self();
     } else {
       this.next_shot -= dt * 1000;
       if (this.next_shot < 0) {
@@ -133,7 +142,7 @@
       zap.rad2deg(Math.atan2(cosmos.ship.y - this.y,
             zap.random_int_signed($SAUCER_OFF) + cosmos.ship.x - this.x))
       : zap.random_int(360);
-    ship.fire.call(this, h);
+    sprite.fire.call(this, h);
   };
 
 
@@ -184,8 +193,7 @@
     this.explode();
   };
 
-  var cosmos = Object.create(zap.cosmos)
-    .init(document.getElementById("cosmos"));
+  var cosmos = zap.make(zap.cosmos, document.getElementById("cosmos"));
 
   // Setting the score
   var score;
@@ -231,9 +239,9 @@
 
   // Show a message to "press any key" after a short delay
   cosmos.any_key = function () {
-    document.getElementById("score").textContent = $HISCORE.fmt(this.hiscore);
     window.setTimeout(function () {
       addl_message($ANY_KEY);
+      hiscore(this.hiscore);
       this.can_start = true;
     }.bind(this), $READY_DELAY_MS);
   };
@@ -379,8 +387,7 @@
 
   // Make a new asteroid, size 1, 2, or 3 (from smallest to largest)
   cosmos.make_asteroid = function (size) {
-    return this.children.asteroids.append_child(Object.create(asteroid)
-        .init($path(), size));
+    return this.children.asteroids.new_child(asteroid, $path(), size);
   };
 
   // Make n asteroids, or, if n is actually a list of asteroids, reset the
@@ -416,8 +423,7 @@
       this.next_saucer = zap.random_int($SAUCER_T);
       var p = this.score / $NEW_LIFE;
       var proto = Math.random() < p ? small_saucer : saucer;
-      var s = this.children.saucers.append_child(Object.create(proto)
-          .init($use("#saucer")));
+      var s = this.children.saucers.new_child(proto, $use("#saucer"));
       if (proto === small_saucer) {
         s.s = $SAUCER_SMALL_SCALE;
         s.elem.setAttribute("stroke", "yellow");
@@ -433,13 +439,14 @@
 
   // Make a new player ship
   cosmos.make_ship = function (system) {
-    return system.append_child(Object.create(ship).init($use("#ship")));
+    return system.new_child(ship, $use("#ship"));
   };
 
   // Start a new game
   cosmos.new_game = function () {
     message("");
     addl_message("");
+    hiscore();
     this.score = 0;
     this.init_lives();
     this.can_start = false;
@@ -472,10 +479,10 @@
           var a = bullet.collide_radius(this.children.asteroids.children) ||
             bullet.collide_radius(this.children.saucers.children);
           if (a && !a.ttl) {
-            bullet.parent.remove_child(bullet);
+            bullet.remove_self();
             this.score += a.score;
-            init_debris(a, this.children.points.append_child(Object.create(sprite)
-              .init($text(a.score.toString()))));
+            init_debris(a, this.children.points.new_child(sprite,
+                $text(a.score.toString())));
             a.split();
           }
         }
@@ -484,7 +491,7 @@
         if (bullet.ttl) {
           var a = bullet.collide_radius(this.children.asteroids.children);
           if (a && !a.ttl) {
-            bullet.parent.remove_child(bullet);
+            bullet.remove_self();
             a.split();
           }
         }
@@ -492,7 +499,7 @@
       if (this.children.asteroids.children.length === 0 &&
           this.children.saucers.children.length === 0) {
         flash("hyperspace-{0}".fmt(zap.random_int(0, 5)));
-        this.ship.parent.remove_child(this.ship);
+        this.ship.remove_self();
         this.ship = null;
         ++this.level;
       }

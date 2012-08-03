@@ -230,6 +230,13 @@
     return typeof p === "string" && p.trim().toLowerCase() === "true";
   };
 
+  // Make a new object from a proto and call its init method with the rest of
+  // the arguments
+  zap.make = function (proto) {
+    var obj = Object.create(proto);
+    return proto.init.apply(obj, A.slice.call(arguments, 1));
+  };
+
   // Pad a string to the given length with the given padding (defaults to 0)
   zap.pad = function(string, length, padding) {
     if (typeof padding !== "string") {
@@ -468,6 +475,10 @@
       return this;
     },
 
+    new_child: function () {
+      return this.append_child(zap.make.apply(zap, arguments));
+    },
+
     remove_child: function (ch) {
       var index = this.children.indexOf(ch);
       if (index >= 0) {
@@ -482,6 +493,12 @@
     remove_children: function () {
       while (this.children.length > 0) {
         this.remove_child(this.children[0]);
+      }
+    },
+
+    remove_self: function () {
+      if (this.parent) {
+        this.parent.remove_child(this);
       }
     },
 
@@ -512,6 +529,10 @@
 
   zap.sprite.init = function (elem) {
     var h;
+    Object.defineProperty(this, "cosmos", { enumerable: true,
+      get: function () {
+        return this.parent && this.parent.cosmos;
+      } });
     Object.defineProperty(this, "h", { enumerable: true,
       get: function () { return h; },
       set: function (h_) {

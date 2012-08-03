@@ -9,7 +9,7 @@
     <script src="../zap.js"></script>
     <script>
 
-  var cosmos = Object.create(zap.cosmos).init();
+  var cosmos = zap.make(zap.cosmos);
   document.addEventListener("keydown", function (e) {
     if (!zap.is_key_special(e)) {
       e.preventDefault();
