@@ -44,9 +44,9 @@
   };
 
 
-  zap.$.scroller = Object.create(zap.sprite);
+  $.scroller = Object.create(zap.sprite);
 
-  zap.$.scroller.reset = function () {
+  $.scroller.reset = function () {
     this.elem.parentNode.setAttribute("clip-path", this.clip);
     this.y = $SCROLL_Y;
     this.v = 0;
@@ -56,14 +56,14 @@
     }.bind(this), $SCROLL_DELAY_MS);
   };
 
-  zap.$.scroller.did_update = function () {
+  $.scroller.did_update = function () {
     var h = this.elem.getBBox().height;
     if (this.y < -h) {
       this.reset();
     }
   };
 
-  zap.$.scroller.stop = function () {
+  $.scroller.stop = function () {
     this.elem.parentNode.removeAttribute("clip-path");
     this.y = $SCROLL_Y;
     this.v = 0;
@@ -127,8 +127,9 @@
     if (this.a > 0) {
       for (var i = 0, n = zap.random_int($PLUME_N); i < n; ++i) {
         var p = this.parent.new_child(sprite,
-            $circle({ r: zap.random_int($PLUME_R) } ));
-        p.elem.setAttribute("opacity", Math.random());
+            $circle({ r: zap.random_int($PLUME_R), fill: "white",
+              stroke: "none" } ));
+        //p.elem.setAttribute("opacity", Math.random());
         p.ttl = zap.random_number($PLUME_TTL);
         var th = zap.deg2rad(this.h + 180 + zap.random_int_signed($PLUME_ARC));
         p.v = -this.v;
@@ -251,7 +252,7 @@
         message("");
         this.make_asteroids(Math.min($ASTEROIDS_MIN + level - 1,
             $ASTEROIDS_MAX));
-        this.children.saucers.remove_children();
+        this.$saucers.remove_children();
         this.next_saucer = zap.random_int($SAUCER_T);
         this.init_player();
       }.bind(this), $READY_DUR_MS);
@@ -260,8 +261,8 @@
   // Add one life
   cosmos.add_life = function () {
     ++this.lives;
-    var life = this.make_ship(this.children.lives);
-    life.x = 3 * life.radius * this.children.lives.children.length;
+    var life = this.make_ship(this.$lives);
+    life.x = 3 * life.radius * this.$lives.children.length;
     life.y = 3 * life.radius;
     life.r = 270;
   };
@@ -269,8 +270,9 @@
   // Show a message to "press any key" after a short delay
   cosmos.any_key = function () {
     window.setTimeout(function () {
+      this.$asteroids.remove_children();
       addl_message($ANY_KEY);
-      this.children.scroller.reset();
+      this.$scroller.reset();
       hiscore(this.hiscore);
       this.can_start = true;
     }.bind(this), $READY_DELAY_MS);
@@ -280,12 +282,12 @@
   // TODO: or a bullet fired from an enemy ship
   cosmos.check_player_die = function (asteroid) {
     if (this.ship && !this.ship.invicible) {
-      var a = this.ship.collide_radius(this.children.asteroids.children) ||
-        this.ship.collide_radius(this.children.saucers.children);
+      var a = this.ship.collide_radius(this.$asteroids.children) ||
+        this.ship.collide_radius(this.$saucers.children);
       if (a) {
         this.ship.explode();
         delete this.ship;
-        this.children.lives.children[this.children.lives.children.length - 1]
+        this.$lives.children[this.children.lives.children.length - 1]
           .explode();
         flash("explosion");
         if (--this.lives > 0) {
@@ -293,7 +295,7 @@
             message($READY);
             window.setTimeout(function () {
               message("");
-              this.children.saucers.remove_children();
+              this.$saucers.remove_children();
               this.init_player();
             }.bind(this), $READY_DUR_MS);
           }.bind(this), $READY_DELAY_MS);
@@ -375,8 +377,8 @@
           } else if (k === "s") {
             this.next_saucer = 0;
           } else if (k === "x") {
-            var enemies = cosmos.children.asteroids.children.slice()
-              .concat(cosmos.children.saucers.children.slice());
+            var enemies = cosmos.$asteroids.children.slice()
+              .concat(cosmos.$saucers.children.slice());
             enemies.forEach(function (a) {
               if (a.explosion_sound) {
                 this.score += a.score;
@@ -385,7 +387,9 @@
             }, this);
           }
         }
-        if (k === "p") {
+        if (k === "f") {
+          cosmos.show_fps = !cosmos.show_fps;
+        } else if (k === "p") {
           if (cosmos.running) {
             message($PAUSED);
             cosmos.running = false;
@@ -403,7 +407,7 @@
 
   // Initialize lives
   cosmos.init_lives = function () {
-    this.children.lives.remove_children();
+    this.$lives.remove_children();
     this.lives = 0;
     for (var i = 0; i < $LIVES; ++i) {
       this.add_life();
@@ -413,8 +417,8 @@
   // Initialize the player ship for a new game, new level or after death
   // Also resets the asteroids so that the player has a safe zone to start with
   cosmos.init_player = function () {
-    this.make_asteroids(this.children.asteroids.children);
-    this.ship = this.make_ship(this.children.player);
+    this.make_asteroids(this.$asteroids.children);
+    this.ship = this.make_ship(this.$player);
     this.ship.x = vb.width / 2;
     this.ship.y = vb.height / 2;
     this.ship.h = 270;
@@ -435,7 +439,7 @@
 
   // Make a new asteroid, size 1, 2, or 3 (from smallest to largest)
   cosmos.make_asteroid = function (size) {
-    return this.children.asteroids.new_child(asteroid, $path(), size);
+    return this.$asteroids.new_child(asteroid, $path(), size);
   };
 
   // Make n asteroids, or, if n is actually a list of asteroids, reset the
@@ -443,7 +447,7 @@
   cosmos.make_asteroids = function (n) {
     var r = Math.floor(Math.min(vb.width, vb.height) / 4);
     if (typeof n === "number") {
-      this.children.asteroids.remove_children();
+      this.$asteroids.remove_children();
       for (var i = 0; i < n; ++i) {
         var a = this.make_asteroid(3);
         var th = zap.random_number(2 * Math.PI);
@@ -471,7 +475,7 @@
       this.next_saucer = zap.random_int($SAUCER_T);
       var p = this.score / $NEW_LIFE;
       var proto = Math.random() < p ? small_saucer : saucer;
-      var s = this.children.saucers.new_child(proto, $use("#saucer"));
+      var s = this.$saucers.new_child(proto, $use("#saucer"));
       if (proto === small_saucer) {
         s.s = $SAUCER_SMALL_SCALE;
         s.elem.setAttribute("stroke", "yellow");
@@ -494,7 +498,7 @@
   cosmos.new_game = function () {
     message("");
     addl_message("");
-    this.children.scroller.stop();
+    this.$scroller.stop();
     hiscore();
     this.score = 0;
     this.init_lives();
@@ -519,34 +523,34 @@
   // shake the screen
   cosmos.did_update = function (dt) {
     if (this.ship) {
-      this.children.lives.children.forEach(function (life) {
+      this.$lives.children.forEach(function (life) {
         life.r =
           zap.rad2deg(Math.atan2(this.ship.y - life.y, this.ship.x - life.x));
       }, this);
-      this.children.player.children.forEach(function (bullet) {
+      this.$player.children.forEach(function (bullet) {
         if (bullet.ttl) {
-          var a = bullet.collide_radius(this.children.asteroids.children) ||
-            bullet.collide_radius(this.children.saucers.children);
+          var a = bullet.collide_radius(this.$asteroids.children) ||
+            bullet.collide_radius(this.$saucers.children);
           if (a && !a.ttl) {
             bullet.remove_self();
             this.score += a.score;
-            init_debris(a, this.children.points.new_child(sprite,
+            init_debris(a, this.$points.new_child(sprite,
                 $text(a.score.toString())), true);
             a.explode();
           }
         }
       }, this);
-      this.children.saucers.children.forEach(function (bullet) {
+      this.$saucers.children.forEach(function (bullet) {
         if (bullet.ttl) {
-          var a = bullet.collide_radius(this.children.asteroids.children);
+          var a = bullet.collide_radius(this.$asteroids.children);
           if (a && !a.ttl) {
             bullet.remove_self();
             a.explode();
           }
         }
       }, this);
-      if (this.children.asteroids.children.length === 0 &&
-          this.children.saucers.children.length === 0) {
+      if (this.$asteroids.children.length === 0 &&
+          this.$saucers.children.length === 0) {
         flash("hyperspace-{0}".fmt(zap.random_int(0, 5)));
         this.ship.remove_self();
         this.ship = null;
@@ -562,6 +566,10 @@
             zap.random_int_around(this.shaking.amp),
             zap.random_int_around(this.shaking.amp)));
       }, this);
+    }
+    if (this.show_fps) {
+      document.getElementById("fps").textContent =
+        (Math.round(dt > 0 ? 1 / dt : 0)).toString();
     }
   };
 

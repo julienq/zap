@@ -1,8 +1,6 @@
 (function (zap) {
   "use strict";
 
-  zap.$ = {};  // extension namespace
-
   var A = Array.prototype;
 
   // Some predefined global parameters
@@ -530,6 +528,10 @@
       if (index >= 0) {
         this.children.splice(index, 1);
       }
+      if (ch.elem.id) {
+        delete parent.children[ch.elem.id];
+        delete parent["$" + ch.elem.id];
+      }
       ch.parent = null;
       if (ch.elem.parentNode) {
         ch.elem.parentNode.removeChild(ch.elem);
@@ -611,7 +613,7 @@
     var path = p.split(".");
     for (var i = 0, n = path.length; i < n; ++i) {
       proto = proto[path[i]];
-      if (typeof proto !== "object") {
+      if (!(proto instanceof  Object)) {
         return;
       }
     }
@@ -626,6 +628,9 @@
     }
     if (ch.elem.id) {
       this.children[ch.elem.id] = ch;
+      this["$" + ch.elem.id] = ch;
+      console.log("Append child: ${0}".fmt(ch.elem.id),
+        this["$" + ch.elem.id]);
     }
     return ch;
   }
