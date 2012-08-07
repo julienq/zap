@@ -135,6 +135,11 @@
     return Math.max(Math.min(isNaN(value) ? 0 : value, max), min);
   };
 
+  // Compute the square of the distance between p1 and p2
+  zap.dist = function(p1, p2) {
+    return Math.sqrt(Math.pow(p1.x - p2.x, 2), Math.pow(p1.y - p2.y, 2));
+  };
+
   // Degree to radian conversion
   zap.deg2rad = function (a) {
     return a / 180 * Math.PI;
