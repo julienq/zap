@@ -1,0 +1,9 @@
+.ui-button {
+  display: inline-block;
+  padding: 0.2em;
+  cursor: default;
+}
+
+.ui-button.ui--down {
+  background-color: #ccc;
+}

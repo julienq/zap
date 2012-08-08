@@ -203,6 +203,18 @@
     return key.join("+");
   };
 
+  zap.find_prototype = function (p) {
+    var proto = window;
+    var path = p.split(".");
+    for (var i = 0, n = path.length; i < n; ++i) {
+      proto = proto[path[i]];
+      if (!(proto instanceof  Object)) {
+        return;
+      }
+    }
+    return proto;
+  };
+
   // Fix for elements that do not have a dataset property
   zap.fix_dataset = function (elem) {
     if (!elem.dataset) {
@@ -613,18 +625,6 @@
     zap.system.update.call(this, dt);
   };
 
-  function find_proto(p) {
-    var proto = window;
-    var path = p.split(".");
-    for (var i = 0, n = path.length; i < n; ++i) {
-      proto = proto[path[i]];
-      if (!(proto instanceof  Object)) {
-        return;
-      }
-    }
-    return proto;
-  }
-
   function append_child(ch) {
     ch.parent = this;
     this.children.push(ch);
@@ -652,7 +652,7 @@
       this.children = [];
       A.forEach.call(elem.querySelectorAll("[data-proto]"), function (elem) {
         zap.fix_dataset(elem);
-        var proto = find_proto(elem.dataset.proto);
+        var proto = zap.find_prototype(elem.dataset.proto);
         if (proto) {
           this.append_child(Object.create(proto).init(elem));
         }

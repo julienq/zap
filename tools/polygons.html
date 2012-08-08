@@ -5,12 +5,17 @@
     <meta charset="UTF-8">
     <meta http-equiv="cache-control" content="no-cache">
     <link rel="stylesheet" href="../zap.css">
+    <link rel="stylesheet" href="ui.css">
     <style>
 
 body {
   background-color: #ccc;
   font-family: Univers, "Helvetica Neue", Helvetica, sans-serif;
   margin: 0;
+}
+
+footer {
+  background-color: white;
 }
 
     </style>
@@ -20,7 +25,14 @@ body {
       <svg class="zap-full">
       </svg>
     </div>
+    <footer>
+      <div data-ui="ui.toolbar">
+        <div data-ui="ui.button" data-label="polygon">Polygon</div>
+        <div data-ui="ui.button" data-label="select">Select</div>
+      </div>
+    </footer>
     <script src="../zap.js"></script>
+    <script src="ui.js"></script>
     <script src="polygons.js"></script>
   </body>
 </html>

@@ -3,7 +3,7 @@
 
   var g;
   var points;
-  var down;
+  var dragging;
 
   function join_points(points) {
     return points.map(function (p) { return p.x + "," + p.y; }).join(" ");
@@ -23,7 +23,7 @@
     g.lastChild.setAttribute("points", join_points(points));
   }
 
-  function move_point(e) {
+  function drag_point(e) {
     points[points.length - 1].x = e.pageX;
     points[points.length - 1].y = e.pageY;
     g.lastChild.setAttribute("points", join_points(points));
@@ -34,28 +34,36 @@
   function set_point(e) {
     var p = { x: e.pageX, y: e.pageY };
     if (points.length > 3 && zap.dist(p, points[0]) < 4) {
-      g.parentNode.replaceChild($polygon({ fill: "white", stroke: "none",
-        points: join_points(points) }), g);
+      var p = g.parentNode.replaceChild($polygon({ fill: "white",
+        stroke: "none", points: join_points(points) }), g);
       g = null;
       return;
     }
   }
 
-  document.addEventListener("mousedown", function (e) {
-    add_point(e);
-    down = true;
-  }, false);
+  var svg = document.querySelector("svg");
+  var toolbar = document.querySelector("[data-ui='ui.toolbar']")._toolbar;
 
-  document.addEventListener("mousemove", function (e) {
-    if (down) {
-      move_point(e);
+  toolbar.current = toolbar.controls[0];
+
+  svg.addEventListener("mousedown", function (e) {
+    e.preventDefault();
+    if (toolbar.current.dataset.label === "polygon") {
+      add_point(e);
+      dragging = true;
     }
   }, false);
 
-  document.addEventListener("mouseup", function (e) {
-    if (down) {
+  svg.addEventListener("mousemove", function (e) {
+    if (toolbar.current.dataset.label === "polygon" && dragging) {
+      drag_point(e);
+    }
+  }, false);
+
+  svg.addEventListener("mouseup", function (e) {
+    if (toolbar.current.dataset.label === "polygon" && dragging) {
       set_point(e);
-      down = false;
+      dragging = false;
     }
   }, false);
 
