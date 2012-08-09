@@ -83,16 +83,19 @@
   ui.toolbar = {
     init: function (elem) {
       this.elem = elem;
-      elem._toolbar = this;
       this.controls = A.slice.call(elem.querySelectorAll("[data-ui]"));
       this.controls.forEach(function (c) {
         ui.listen(c, "@pushed", this);
       }, this);
       var current;
-      Object.defineProperty(this, "current", { enumerable: true,
-        get: function () { return current; },
+      var that = this;
+      Object.defineProperty(elem, "controls", { enumerable: true,
+        get: function () { return that.controls } });
+      Object.defineProperty(elem, "tool", { enumerable: true,
+        get: function () { return current ? current.dataset.label : ""; },
         set: function (c) {
           if (c !== current) {
+            var b = this.tool;
             if (current) {
               current.down = false;
             }
@@ -100,6 +103,7 @@
               c.down = true;
             }
             current = c;
+            ui.notify(elem, "@tool", { before: b });
           }
         } });
       return this;
@@ -107,7 +111,7 @@
 
     handleEvent: function (e) {
       if (e.type === "@pushed") {
-        this.current = e.source;
+        this.elem.tool = e.source;
       }
     }
   };
