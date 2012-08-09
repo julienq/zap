@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Zap | Examples | Platformer</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="cache-control" content="no-cache">
+    <link rel="stylesheet" href="../zap.css">
+    <style>
+body {
+  background-color: black;
+  color: white;
+  font-family: Univers, "Helvetica Neue", Helvetica, sans-serif;
+}
+footer, header {
+  padding: 0.5em;
+  text-align: center;
+}
+    </style>
+  </head>
+  <body class="zap-frame">
+    <header>
+      Platformer test
+    </header>
+    <div class="zap-content">
+      <svg class="zap-full" viewBox="0 0 1600 1200">
+        <defs>
+          <linearGradient id="gradient" y2="100%" x2="0%">
+            <stop offset="0%" stop-color="#0058d8" />
+            <stop offset="100%" stop-color="#b83800" />
+          </linearGradient>
+          <rect id="tile" width="100" height="100" rx="8" ry="8"/>
+          <clipPath id="clip">
+            <rect id="bg" width="1600" height="1200" rx="40" ry="40"/>
+          </clipPath>
+        </defs>
+        <g clip-path="url(#clip)" id="cosmos" data-running="true">
+          <rect width="1600" height="1200" fill="url(#gradient)"/>
+          <g id="fg" fill="none" stroke-width="8" stroke-linejoin="round"
+            stroke="rgba(255, 255, 255, 0.5)">
+            <g>
+              <use xlink:href="#tile" x="100" y="800"/>
+              <use xlink:href="#tile" x="200" y="800"/>
+              <use xlink:href="#tile" x="300" y="800"/>
+              <use xlink:href="#tile" x="400" y="800"/>
+              <use xlink:href="#tile" x="500" y="800"/>
+              <use xlink:href="#tile" x="600" y="800"/>
+              <use xlink:href="#tile" x="700" y="800"/>
+              <use xlink:href="#tile" x="800" y="800"/>
+              <use xlink:href="#tile" x="900" y="800"/>
+              <use xlink:href="#tile" x="1000" y="800"/>
+              <use xlink:href="#tile" x="1100" y="800"/>
+              <use xlink:href="#tile" x="1200" y="800"/>
+              <use xlink:href="#tile" x="1300" y="800"/>
+              <use xlink:href="#tile" x="1400" y="800"/>
+            </g>
+            <path id="player" d="M40,0L160,0L100,-120Z"
+              data-proto="zap.sprite" data-x="100" data-y="800" data-vmin="0"
+              data-vmax="400"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <footer>
+      Zap
+    </footer>
+
+    <ul class="zap-params">
+      <li data-param="ACCEL" data-num="900">
+      <li data-param="DECEL" data-num="-700">
+    </ul>
+
+    <script src="../zap.js"></script>
+    <script>
+(function () {
+  "use strict";
+
+  var cosmos = Object.create(zap.cosmos)
+    .init(document.getElementById("cosmos"));
+
+  document.addEventListener("keydown", function (e) {
+    if (!zap.is_key_special(e)) {
+      e.preventDefault();
+      var k = zap.describe_key(e);
+      if (k === "left") {
+        cosmos.$player.a = $ACCEL;
+        cosmos.$player.h = 180;
+      } else if (k === "right") {
+        cosmos.$player.a = $ACCEL;
+        cosmos.$player.h = 0;
+      }
+    }
+  }, false);
+
+  document.addEventListener("keyup", function (e) {
+    var k = zap.describe_key(e);
+    if (k === "left" || k === "right") {
+      cosmos.$player.a = $DECEL;
+    }
+  }, false);
+
+}());
+    </script>
+  </body>
+</html>
