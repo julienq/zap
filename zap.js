@@ -137,7 +137,7 @@
 
   // Compute the square of the distance between p1 and p2
   zap.dist = function(p1, p2) {
-    return Math.sqrt(Math.pow(p1.x - p2.x, 2), Math.pow(p1.y - p2.y, 2));
+    return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
   };
 
   // Degree to radian conversion
@@ -204,6 +204,9 @@
   };
 
   zap.find_prototype = function (p) {
+    if (typeof p !== "string") {
+      return;
+    }
     var proto = window;
     var path = p.split(".");
     for (var i = 0, n = path.length; i < n; ++i) {

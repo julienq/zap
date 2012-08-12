@@ -26,9 +26,11 @@ footer {
       </svg>
     </div>
     <footer>
-      <div data-ui="ui.toolbar">
-        <div data-ui="ui.button" data-label="polygon">Polygon</div>
-        <div data-ui="ui.button" data-label="select">Select</div>
+      <div data-ui="ui.toolbar" id="toolbar" data-target="svg"
+        data-selected="polygon-button">
+        <div data-ui="ui.button" data-tool="$.polygon"
+          id="polygon-button">Polygon</div>
+        <div data-ui="ui.button" data-tool="$.select">Select</div>
       </div>
     </footer>
     <script src="../zap.js"></script>
@@ -36,4 +38,3 @@ footer {
     <script src="polygons.js"></script>
   </body>
 </html>
-

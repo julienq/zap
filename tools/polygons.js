@@ -1,9 +1,91 @@
 (function () {
   "use strict";
 
-  var g;
-  var points;
-  var dragging;
+  var svg = document.querySelector("svg");
+
+  // Tools
+
+  function join_points(points) {
+    return points.map(function (p) { return p.x + "," + p.y; }).join(" ");
+  }
+
+  function make_point(e) {
+    var p = { x: e.clientX, y: e.clientY };
+    p.elem = $circle({ stroke: "none", fill: "white", r: 2, cx: p.x, cy: p.y });
+    return p;
+  }
+
+  $.polygon = {
+    init: function () {
+      this.svg = svg;
+      return this;
+    },
+
+    mousedown: function (e) {
+      e.preventDefault();
+      delete this.line;
+      if (!this.g) {
+        this.g = this.svg.appendChild($g());
+        this.points = [make_point(e)];
+        this.g.appendChild(this.points[0].elem);
+      }
+    },
+
+    mousemove: function (e) {
+      if (this.g) {
+        var p = this.points[this.points.length - 1];
+        if (!this.line) {
+          var q = make_point(e);
+          this.points.push(q);
+          this.g.appendChild(q.elem);
+          this.line = this.g.appendChild($line({ stroke: "white",
+            x1: p.x, y1: p.y, x2: q.x, y2: q.y }));
+          p = q;
+        }
+        p.x = e.clientX;
+        p.y = e.clientY;
+        p.elem.setAttribute("cx", p.x);
+        p.elem.setAttribute("cy", p.y);
+        this.line.setAttribute("x2", p.x);
+        this.line.setAttribute("y2", p.y);
+        this.points[0].elem.setAttribute("fill", "white");
+        if (this.points.length > 2) {
+          var d = zap.dist(this.points[0], this.points[this.points.length - 1]);
+          if (d < 5) {
+            this.points[0].elem.setAttribute("fill", "red");
+          }
+        }
+      }
+    },
+
+    mouseup: function (e) {
+      if (this.points.length > 2) {
+        var d = zap.dist(this.points[0], this.points[this.points.length - 1]);
+        if (d < 5) {
+          var p = $polygon({ fill: "white", stroke: "none",
+            points: join_points(this.points), "data-selectable": true });
+          this.g.parentNode.replaceChild(p, this.g);
+          this.reset();
+          return;
+        }
+      }
+    },
+
+    reset: function (e) {
+      if (this.g && this.g.parentNode) {
+        this.g.parentNode.removeChild(this.g);
+      }
+      delete this.g;
+      delete this.line;
+    },
+
+    unselect: function () {
+      this.reset();
+    }
+  };
+
+
+  // Selection
 
   var selection;
 
@@ -18,86 +100,31 @@
   }
 
   function select_elem(elem) {
+    if (!elem || !zap.is_true(elem.dataset.selectable)) {
+      elem = null;
+    }
     if (selection !== elem) {
       if (selection) {
         restore_attr(selection, "fill");
-        restore_attr(selection, "stroke");
       }
       if (elem) {
         override_attr(elem, "fill", "#08f");
-        override_attr(elem, "stroke", "white");
       }
       selection = elem;
     }
   };
 
-  function join_points(points) {
-    return points.map(function (p) { return p.x + "," + p.y; }).join(" ");
-  }
+  $.select = {
+    init: function () {
+      return this;
+    },
 
-  function add_point(e) {
-    var p = { x: e.pageX, y: e.pageY };
-    if (!g) {
-      points = [];
-      var svg = document.querySelector("svg");
-      g = svg.appendChild($g());
-      g.appendChild($polyline({ stroke: "white", fill: "none" }));
-    }
-    points.push(p);
-    g.insertBefore($circle({ fill: "white", stroke: "none",
-      cx: p.x, cy: p.y, r: 2 }), g.lastChild);
-    g.lastChild.setAttribute("points", join_points(points));
-  }
-
-  function drag_point(e) {
-    points[points.length - 1].x = e.pageX;
-    points[points.length - 1].y = e.pageY;
-    g.lastChild.setAttribute("points", join_points(points));
-    g.lastChild.previousSibling.setAttribute("cx", e.pageX);
-    g.lastChild.previousSibling.setAttribute("cy", e.pageY);
-  }
-
-  function set_point(e) {
-    var p = { x: e.pageX, y: e.pageY };
-    if (points.length > 3 && zap.dist(p, points[0]) < 4) {
-      var p = $polygon({ fill: "white", stroke: "none",
-        points: join_points(points) });
-      g.parentNode.replaceChild(p, g);
-      p.addEventListener("click", function () {
-        if (toolbar.tool === "select") {
-          select_elem(p);
-        }
-      }, false);
-      g = null;
-      return;
-    }
-  }
-
-  var svg = document.querySelector("svg");
-  var toolbar = document.querySelector("[data-ui='ui.toolbar']");
-
-  toolbar.tool = toolbar.controls[0];
-
-  svg.addEventListener("mousedown", function (e) {
-    if (toolbar.tool === "polygon") {
+    mousedown: function (e) {
       e.preventDefault();
-      add_point(e);
-      dragging = true;
+      select_elem(document.elementFromPoint(e.clientX, e.clientY));
     }
-  }, false);
+  };
 
-  svg.addEventListener("mousemove", function (e) {
-    if (toolbar.tool === "polygon" && dragging) {
-      drag_point(e);
-    }
-  }, false);
-
-  svg.addEventListener("mouseup", function (e) {
-    if (toolbar.tool === "polygon" && dragging) {
-      set_point(e);
-      dragging = false;
-    }
-  }, false);
-
+  ui.init_controls();
 
 }());
