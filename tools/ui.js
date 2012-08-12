@@ -155,6 +155,7 @@
       var proto = zap.find_prototype(ch.elem.dataset.tool);
       if (proto) {
         var tool = Object.create(proto).init();
+        tool.toolbar = this;
         tool.control = ch;
         ch.tool = tool;
         ui.listen(ch, "@pushed", function (e) {
