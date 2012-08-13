@@ -129,6 +129,7 @@
   ui.toolbar = Object.create(ui.control);
 
   ui.toolbar.init = function () {
+    add_class(this.elem, "ui-toolbar");
     var tool;
     Object.defineProperty(this, "tool", { enumerable: true,
       get: function () { return tool; },
@@ -183,8 +184,6 @@
       this.tool[e.type](e);
     }
   };
-
-
 
 
   // Initialize all ui controls depth-first

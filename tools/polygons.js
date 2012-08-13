@@ -10,6 +10,34 @@
     return points.map(function (p) { return p.x + "," + p.y; }).join(" ");
   }
 
+  $.freehand = {
+    init: function () {
+      this.svg = svg;
+      return this;
+    },
+
+    mousedown: function (e) {
+      e.preventDefault();
+      this.points = [{ x: e.clientX, y: e.clientY }];
+      this.polyline = this.svg.appendChild($polyline({ fill: /*"none",
+        stroke:*/ document.getElementById("fill-color").value,
+        "fill-rule": "non-zero", "data-selectable": true
+      }));
+    },
+
+    mousemove: function (e) {
+      if (this.points) {
+        this.points.push({ x: e.clientX, y: e.clientY });
+        this.polyline.setAttribute("points", join_points(this.points));
+      }
+    },
+
+    mouseup: function () {
+      delete this.points;
+      delete this.polyline;
+    }
+  };
+
   function make_point(e) {
     var p = { x: e.clientX, y: e.clientY };
     p.elem = $circle({ stroke: "none", r: 2, cx: p.x, cy: p.y });
@@ -86,32 +114,18 @@
 
     unselect: function () {
       this.reset();
+    },
+
+    update_fill: function (color) {
+      if (this.g) {
+        this.g.setAttribute("fill", color);
+        this.g.setAttribute("stroke", color);
+      }
     }
   };
 
 
   // Selection
-
-  var selection;
-
-  function select_elem(elem) {
-    if (!elem || !zap.is_true(elem.dataset.selectable)) {
-      elem = null;
-    }
-    if (selection !== elem) {
-      if (selection) {
-        selection.removeAttribute("stroke");
-        selection.removeAttribute("stroke-width");
-        selection.removeAttribute("stroke-linejoin");
-      }
-      if (elem) {
-        elem.setAttribute("stroke", "red");
-        elem.setAttribute("stroke-width", "4");
-        elem.setAttribute("stroke-linejoin", "round");
-      }
-      selection = elem;
-    }
-  };
 
   $.select = {
     init: function () {
@@ -120,14 +134,46 @@
 
     mousedown: function (e) {
       e.preventDefault();
-      select_elem(document.elementFromPoint(e.clientX, e.clientY));
+      this.select_elem(document.elementFromPoint(e.clientX, e.clientY));
     },
 
     unselect: function () {
-      select_elem();
+      this.select_elem();
+    },
+
+    select_elem: function (elem) {
+      if (!elem || !zap.is_true(elem.dataset.selectable)) {
+        elem = null;
+      }
+      if (this.selection !== elem) {
+        if (this.selection) {
+          this.selection.removeAttribute("stroke");
+          this.selection.removeAttribute("stroke-width");
+          this.selection.removeAttribute("stroke-linejoin");
+        }
+        if (elem) {
+          elem.setAttribute("stroke", "red");
+          elem.setAttribute("stroke-width", "4");
+          elem.setAttribute("stroke-linejoin", "round");
+        }
+        this.selection = elem;
+      }
+    },
+
+    update_fill: function (color) {
+      if (this.selection) {
+        this.selection.setAttribute("fill", color);
+      }
     }
   };
 
   ui.init_controls();
+  var toolbar = document.getElementById("toolbar").ui;
+  var fill = document.getElementById("fill-color");
+  fill.addEventListener("change", function (e) {
+    if (toolbar.tool && toolbar.tool.update_fill) {
+      toolbar.tool.update_fill(e.target.value);
+    }
+  }, false);
 
 }());
