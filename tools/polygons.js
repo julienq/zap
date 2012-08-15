@@ -19,9 +19,11 @@
     mousedown: function (e) {
       e.preventDefault();
       this.points = [{ x: e.clientX, y: e.clientY }];
-      this.polyline = this.svg.appendChild($polyline({ fill: /*"none",
-        stroke:*/ document.getElementById("fill-color").value,
-        "fill-rule": "non-zero", "data-selectable": true
+      this.polyline = this.svg.appendChild($polyline({ fill: "none",
+        stroke: document.getElementById("fill-color").value,
+        "fill-rule": "non-zero", "data-selectable": true,
+        "stroke-linejoin": "round", "stroke-linecap": "round",
+        "stroke-width": document.getElementById("stroke-width").value
       }));
     },
 
