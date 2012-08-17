@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>DOUGLAS</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="cache-control" content="no-cache">
+    <link rel="stylesheet" href="../zap.css">
+    <style>
+body {
+  background-color: black;
+  margin: 2em;
+}
+    </style>
+  </head>
+  <body class="zap-frame">
+      <div class="zap-content">
+        <svg class="zap-full" viewBox="0 0 320 480" data-running="true">
+          <defs>
+            <clipPath id="clip">
+              <rect id="bg" width="320" height="480" rx="20" ry="20"/>
+            </clipPath>
+            <polygon id="right-triangle" points="0,0 40,0 0,-35"/>
+            <linearGradient id="gradient" y2="100%" x2="0%">
+              <stop offset="0%" stop-color="#58d898" />
+              <stop offset="100%" stop-color="#580098" />
+            </linearGradient>
+          </defs>
+          <g clip-path="url(#clip)">
+            <rect width="320" height="480" fill="url(#gradient)"/>
+            <g id="fg" data-proto="zap.system">
+              <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
+                data-proto="$.triangle" data-x="140" data-y="400"/>
+              <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
+                data-proto="$.triangle" data-x="140" data-y="375"/>
+              <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
+                data-proto="$.triangle" data-x="140" data-y="350"/>
+              <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
+                data-proto="$.triangle" data-x="140" data-y="325"/>
+              <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
+                data-proto="$.triangle" data-x="140" data-y="300"/>
+              <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
+                data-proto="$.triangle" data-x="140" data-y="275"/>
+              <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
+                data-proto="$.triangle" data-x="140" data-y="250"/>
+            </g>
+          </div>
+          </g>
+        </svg>
+      </div>
+
+    <script src="../zap.js"></script>
+    <script src="douglas.js"></script>
+  </body>
+</html>
+

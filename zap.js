@@ -487,10 +487,7 @@
       }
     }, this);
     this.did_update(dt);
-    if (this.elem) {
-      this.elem.setAttribute("transform",
-        zap.format("translate({x}, {y}) rotate({r}) scale({s})", this));
-    }
+    this.set_transform();
   }
 
   zap.system = {
@@ -567,6 +564,13 @@
     remove_self: function () {
       if (this.parent) {
         this.parent.remove_child(this);
+      }
+    },
+
+    set_transform: function () {
+      if (this.elem) {
+        this.elem.setAttribute("transform",
+          zap.format("translate({x}, {y}) rotate({r}) scale({s})", this));
       }
     },
 
@@ -675,6 +679,8 @@
       this.running = zap.is_true(elem.dataset.running);
       return this;
     },
+
+    set_transform: function () {},
 
     update: function (t) {
       if (this.running) {
