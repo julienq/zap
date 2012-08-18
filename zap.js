@@ -55,7 +55,7 @@
         if (attrs.hasOwnProperty(a) &&
             attrs[a] !== undefined && attrs[a] !== null) {
           var split = a.split(":");
-          ns = split[1] && zap[split[0].toUppserCase() + "_NS"];
+          ns = split[1] && zap[split[0].toUpperCase() + "_NS"];
           if (ns) {
             elem.setAttributeNS(ns, split[1], attrs[a]);
           } else {
@@ -121,7 +121,7 @@
   });
 
   // $use takes an initial xlink:href attribute to simplify its creation
-  // TODO other elements that use xlink:href
+  // TODO other elements that use xlink:href?
   window.$use = function (href) {
     var use = zap.create_element.apply(window.document,
         ["svg:use"].concat(A.slice.call(arguments, 1)));
@@ -218,7 +218,8 @@
     return proto;
   };
 
-  // Fix for elements that do not have a dataset property
+  // Fix for elements that do not have a dataset property (e.g. SVG elements do
+  // not have a dataset in Firefox)
   zap.fix_dataset = function (elem) {
     if (!elem.dataset) {
       elem.dataset = {};
@@ -270,6 +271,7 @@
   };
 
   // Init audio (this is adapted from Perlenspiel)
+  // TODO use WebAudio when possible
   zap.play_sound = (function () {
     var channels = [];
     for (var i = 0; i < $ZAP_AUDIO_CHANNELS; ++i) {
@@ -298,6 +300,18 @@
       }
     }
   }());
+
+  // Get an SVG point from a mouse/touch event
+  zap.point_from_event = function (e, svg) {
+    var p;
+    if (!svg) {
+      svg = document.querySelector("svg");
+    }
+    p = svg.createSVGPoint();
+    p.x = e.touches ? e.touches[0].clientX : e.clientX;
+    p.y = e.touches ? e.touches[0].clientY : e.clientY;
+    return p.matrixTransform(svg.getScreenCTM().inverse());
+  };
 
   // Radian to degree conversion
   zap.rad2deg = function (th) {
@@ -641,8 +655,6 @@
     if (ch.elem.id) {
       this.children[ch.elem.id] = ch;
       this["$" + ch.elem.id] = ch;
-      console.log("Append child: ${0}".fmt(ch.elem.id),
-        this["$" + ch.elem.id]);
     }
     return ch;
   }
@@ -657,13 +669,25 @@
         elem = document.querySelector("svg") || document.body;
       }
       this.children = [];
-      A.forEach.call(elem.querySelectorAll("[data-proto]"), function (elem) {
-        zap.fix_dataset(elem);
-        var proto = zap.find_prototype(elem.dataset.proto);
-        if (proto) {
-          this.append_child(Object.create(proto).init(elem));
-        }
-      }, this);
+
+      var init_children = function (elem, parent) {
+        A.forEach.call(elem.childNodes, function (ch) {
+          if (ch.nodeType === window.Node.ELEMENT_NODE) {
+            var proto = ch.getAttribute("data-proto");
+            if (proto) {
+              zap.fix_dataset(ch);
+              proto = zap.find_prototype(ch.dataset.proto);
+              if (proto) {
+                var p = parent.append_child(Object.create(proto).init(ch));
+              }
+            }
+            init_children(ch, p || parent);
+            p = parent;
+          }
+        }, this);
+      };
+      init_children(elem, this);
+
       var running;
       Object.defineProperty(this, "running", { enumerable: true,
         get: function () {

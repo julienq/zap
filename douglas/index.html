@@ -13,40 +13,54 @@ body {
     </style>
   </head>
   <body class="zap-frame">
-      <div class="zap-content">
-        <svg class="zap-full" viewBox="0 0 320 480" data-running="true">
-          <defs>
-            <clipPath id="clip">
-              <rect id="bg" width="320" height="480" rx="20" ry="20"/>
-            </clipPath>
-            <polygon id="right-triangle" points="0,0 40,0 0,-35"/>
-            <linearGradient id="gradient" y2="100%" x2="0%">
-              <stop offset="0%" stop-color="#58d898" />
-              <stop offset="100%" stop-color="#580098" />
-            </linearGradient>
-          </defs>
-          <g clip-path="url(#clip)">
-            <rect width="320" height="480" fill="url(#gradient)"/>
-            <g id="fg" data-proto="zap.system">
-              <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
-                data-proto="$.triangle" data-x="140" data-y="400"/>
-              <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
-                data-proto="$.triangle" data-x="140" data-y="375"/>
-              <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
-                data-proto="$.triangle" data-x="140" data-y="350"/>
-              <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
-                data-proto="$.triangle" data-x="140" data-y="325"/>
-              <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
-                data-proto="$.triangle" data-x="140" data-y="300"/>
-              <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
-                data-proto="$.triangle" data-x="140" data-y="275"/>
-              <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
-                data-proto="$.triangle" data-x="140" data-y="250"/>
-            </g>
-          </div>
+    <div class="zap-content">
+      <svg class="zap-full" viewBox="0 0 320 480" data-running="true">
+        <defs>
+          <clipPath id="clip">
+            <rect id="bg" width="320" height="480" rx="20" ry="20"/>
+          </clipPath>
+          <polygon id="right-triangle" points="0,0 40,0 0,-35"/>
+          <linearGradient id="gradient" y2="100%" x2="0%">
+            <stop offset="0%" stop-color="#58d898" />
+            <stop offset="100%" stop-color="#580098" />
+          </linearGradient>
+        </defs>
+        <g clip-path="url(#clip)">
+          <rect width="320" height="480" fill="url(#gradient)"/>
+          <line x1="40" x2="40" y2="480" stroke="#08f"/>
+          <line x1="80" x2="80" y2="480" stroke="#08f"/>
+          <line x1="240" x2="240" y2="480" stroke="#08f"/>
+          <line x1="280" x2="280" y2="480" stroke="#08f"/>
+          <g id="bg" data-proto="zap.system">
+            <line x2="960" y2="480" stroke="white" stroke-width="40"
+              stroke-opacity="0.5"/>
           </g>
-        </svg>
-      </div>
+          <g id="fg" data-proto="zap.system">
+            <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
+              data-proto="$.triangle" data-x="140" data-y="400"/>
+            <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
+              data-proto="$.triangle" data-x="140" data-y="375"/>
+            <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
+              data-proto="$.triangle" data-x="140" data-y="350"/>
+            <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
+              data-proto="$.triangle" data-x="140" data-y="325"/>
+            <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
+              data-proto="$.triangle" data-x="140" data-y="300"/>
+            <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
+              data-proto="$.triangle" data-x="140" data-y="275"/>
+            <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
+              data-proto="$.triangle" data-x="140" data-y="250"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <ul class="zap-params">
+      <li data-param="DOUG_V" data-range="0 100">
+      <li data-param="DOUG_ACCEL" data-num="250">
+      <li data-param="DOUG_DECEL" data-num="-250">
+      <li data-param="PLAY_AREA" data-range="80 240">
+    </ul>
 
     <script src="../zap.js"></script>
     <script src="douglas.js"></script>
