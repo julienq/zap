@@ -17,6 +17,17 @@
     });
   };
 
+  // Bind the function f to the object x. Additional arguments can be provided to
+  // specialize the bound function.
+  if (typeof Function.prototype.bind !== "function") {
+    Function.prototype.bind = function (x) {
+      var f = this;
+      var args = A.slice.call(arguments, 1);
+      return function () {
+        return f.apply(x, args.concat(A.slice.call(arguments)));
+      }
+    };
+  }
 
   // Useful XML namespaces for element creation below
   zap.SVG_NS = "http://www.w3.org/2000/svg";

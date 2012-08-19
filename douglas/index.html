@@ -4,6 +4,10 @@
     <title>DOUGLAS</title>
     <meta charset="UTF-8">
     <meta http-equiv="cache-control" content="no-cache">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="../zap.css">
     <style>
 body {
@@ -12,7 +16,7 @@ body {
 }
     </style>
   </head>
-  <body class="zap-frame">
+  <body class="zap-frame" ontouchstart="event.preventDefault();">
     <div class="zap-content">
       <svg class="zap-full" viewBox="0 0 320 480" data-running="true">
         <defs>
@@ -20,6 +24,8 @@ body {
             <rect id="bg" width="320" height="480" rx="20" ry="20"/>
           </clipPath>
           <polygon id="right-triangle" points="0,0 40,0 0,-35"/>
+          <circle id="triangle-target" cx="20" cy="-20" r="30" fill="yellow"
+            fill-opacity="0.2"/>
           <linearGradient id="gradient" y2="100%" x2="0%">
             <stop offset="0%" stop-color="#58d898" />
             <stop offset="100%" stop-color="#580098" />
@@ -36,20 +42,27 @@ body {
               stroke-opacity="0.5"/>
           </g>
           <g id="fg" data-proto="zap.system">
-            <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
-              data-proto="$.triangle" data-x="140" data-y="400"/>
-            <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
-              data-proto="$.triangle" data-x="140" data-y="375"/>
-            <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
-              data-proto="$.triangle" data-x="140" data-y="350"/>
-            <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
-              data-proto="$.triangle" data-x="140" data-y="325"/>
-            <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
-              data-proto="$.triangle" data-x="140" data-y="300"/>
-            <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
-              data-proto="$.triangle" data-x="140" data-y="275"/>
-            <use xlink:href="#right-triangle" fill="white" fill-opacity="0.8"
-              data-proto="$.triangle" data-x="140" data-y="250"/>
+            <g data-shape="right-triangle" fill="white" fill-opacity="0.8"
+              data-target="triangle-target" data-proto="$.triangle" data-x="140"
+              data-y="400"/>
+            <g data-shape="right-triangle" fill="white" fill-opacity="0.8"
+              data-target="triangle-target" data-proto="$.triangle" data-x="140"
+              data-y="375"/>
+            <g data-shape="right-triangle" fill="white" fill-opacity="0.8"
+              data-target="triangle-target" data-proto="$.triangle" data-x="140"
+              data-y="350"/>
+            <g data-shape="right-triangle" fill="white" fill-opacity="0.8"
+              data-target="triangle-target" data-proto="$.triangle" data-x="140"
+              data-y="325"/>
+            <g data-shape="right-triangle" fill="white" fill-opacity="0.8"
+              data-target="triangle-target" data-proto="$.triangle" data-x="140"
+              data-y="300"/>
+            <g data-shape="right-triangle" fill="white" fill-opacity="0.8"
+              data-target="triangle-target" data-proto="$.triangle" data-x="140"
+              data-y="275"/>
+            <g data-shape="right-triangle" fill="white" fill-opacity="0.8"
+              data-target="triangle-target" data-proto="$.triangle" data-x="140"
+              data-y="250"/>
           </g>
         </g>
       </svg>

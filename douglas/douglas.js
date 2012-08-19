@@ -10,9 +10,11 @@
   $.triangle.vmin = $DOUG_V[0];
   $.triangle.vmax = $DOUG_V[1];
   $.triangle.init = function (elem) {
-    elem.addEventListener("touchstart", this, false);
-    elem.addEventListener("touchmove", this, false);
-    elem.addEventListener("touchend", this, false);
+    elem.appendChild($use("#" + elem.dataset.shape));
+    var target = elem.appendChild($use("#" + elem.dataset.target));
+    target.addEventListener("touchstart", this, false);
+    target.addEventListener("touchmove", this, false);
+    target.addEventListener("touchend", this, false);
     this.h = 0;
     return zap.sprite.init.call(this, elem);
   };
