@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Zap | Tools | Gradient</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="cache-control" content="no-cache">
+    <link rel="stylesheet" href="../zap.css">
+    <link rel="stylesheet" href="ui.css">
+    <style>
+
+body {
+  background-color: #ccc;
+  font-family: Univers, "Helvetica Neue", Helvetica, sans-serif;
+  margin: 0;
+}
+
+footer {
+  width: 100%;
+  background-color: white;
+  display: -webkit-box;
+}
+
+footer > div {
+  display: -webkit-box;
+}
+
+.spacer {
+  -webkit-box-flex: 1;
+}
+
+    </style>
+  </head>
+  <body class="zap-frame">
+    <div class="zap-content">
+      <svg class="zap-full">
+        <defs>
+          <linearGradient id="gradient" y2="100%" x2="0%">
+            <stop id="from-stop" offset="0%" stop-color="#58d898" />
+            <stop id="to-stop" offset="100%" stop-color="#580098" />
+          </linearGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#gradient)"/>
+      </svg>
+    </div>
+    <footer>
+      <div>
+        <label>From: <input type="color" id="from-color" value="#ffffff"></label>
+        <span id="from"></span>
+      </div>
+      <div class="spacer"></div>
+      <div>
+        <label>To: <input type="color" id="to-color" value="#ffffff"></label>
+        <span id="to"></span>
+      </div>
+    </footer>
+    <script src="../zap.js"></script>
+    <script src="ui.js"></script>
+    <script>
+
+  ["from", "to"].forEach(function (k) {
+    var picker = document.getElementById(k + "-color");
+    var stop = document.getElementById(k + "-stop");
+    var out = document.getElementById(k);
+    var change = function () {
+      stop.setAttribute("stop-color", picker.value);
+      out.textContent = picker.value;
+    };
+    picker.addEventListener("change", change, false);
+    change();
+  });
+
+    </script>
+  </body>
+</html>

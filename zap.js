@@ -17,8 +17,8 @@
     });
   };
 
-  // Bind the function f to the object x. Additional arguments can be provided to
-  // specialize the bound function.
+  // Bind the function f to the object x. Additional arguments can be provided
+  // to specialize the bound function.
   if (typeof Function.prototype.bind !== "function") {
     Function.prototype.bind = function (x) {
       var f = this;

@@ -11,6 +11,7 @@
   $.triangle.vmax = $DOUG_V[1];
   $.triangle.init = function (elem) {
     elem.appendChild($use("#" + elem.dataset.shape));
+    elem.appendChild($circle({ fill: "red", stroke: "none", r: 2 }));
     var target = elem.appendChild($use("#" + elem.dataset.target));
     target.addEventListener("touchstart", this, false);
     target.addEventListener("touchmove", this, false);
