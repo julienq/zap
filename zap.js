@@ -610,20 +610,7 @@
       return this.append_child(zap.make.apply(zap, arguments));
     },
 
-    remove_child: function (ch) {
-      var index = this.children.indexOf(ch);
-      if (index >= 0) {
-        this.children.splice(index, 1);
-      }
-      if (ch.elem.id) {
-        delete parent.children[ch.elem.id];
-        delete parent["$" + ch.elem.id];
-      }
-      ch.parent = null;
-      if (ch.elem.parentNode) {
-        ch.elem.parentNode.removeChild(ch.elem);
-      }
-    },
+    remove_child: remove_child,
 
     remove_children: function () {
       while (this.children.length > 0) {
@@ -715,6 +702,21 @@
     return ch;
   }
 
+  function remove_child(ch) {
+    var index = this.children.indexOf(ch);
+    if (index >= 0) {
+      this.children.splice(index, 1);
+    }
+    if (ch.elem.id) {
+      delete parent.children[ch.elem.id];
+      delete parent["$" + ch.elem.id];
+    }
+    ch.parent = null;
+    if (ch.elem.parentNode) {
+      ch.elem.parentNode.removeChild(ch.elem);
+    }
+  }
+
   // This is the main object for a game
   zap.cosmos = {
 
@@ -724,6 +726,7 @@
       if (!(elem instanceof window.Node)) {
         elem = document.querySelector("svg") || document.body;
       }
+      this.elem = elem;
       this.children = [];
 
       var init_children = function (elem, parent) {
@@ -760,6 +763,8 @@
       return this;
     },
 
+    remove_child: remove_child,
+
     set_transform: function () {},
 
     update: function (t) {
@@ -779,14 +784,22 @@
 
 
   // Initialize parameters
+  // Use data-param to introduce the name of a parameter, which will then be
+  // available as $name. The value for the parameter may be one of:
+  //   * data-num (floating point number)
+  //   * data-range (two numbers separated by white space)
+  //   * data-tokens (a list of strings separated by white space)
+  //   * if none of the above, the text content of the node (TODO: elements)
   A.forEach.call(document.querySelectorAll("[data-param]"), function (p) {
     if (p.dataset.hasOwnProperty("num")) {
       window["$" + p.dataset.param] = parseFloat(p.dataset.num);
     } else if (p.dataset.hasOwnProperty("range")) {
-      window["$" + p.dataset.param] = p.dataset.range.split(" ")
+      window["$" + p.dataset.param] = p.dataset.range.trim().split(" ")
         .map(function (n) {
           return parseFloat(n);
         });
+    } else if (p.dataset.hasOwnProperty("tokens")) {
+      window["$" + p.dataset.param] = p.dataset.tokens.trim().split(" ");
     } else {
       window["$" + p.dataset.param] = p.textContent;
     }
