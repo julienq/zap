@@ -26,19 +26,30 @@ body {
             <stop offset="0%" stop-color="#7cea34" />
             <stop offset="100%" stop-color="#3238d2" />
           </linearGradient>
-          <path id="ghost-0" d="M28,0 A28,28 0,0,0 -28,0 L-28,35 L-21,42 L-14,35
-            L-7,42 L0,35 L7,42 L14,35 L21,42 L28,35 Z"/>
-          <path id="ghost-1" d="M28,0 A28,28 0,0,0 -28,0 L-28,42 L-21,35 L-14,42
-            L-7,35 L0,42 L7,35 L14,42 L21,35 L28,42 Z"/>
-          <g id="eye-sockets" fill="white">
-            <circle fill="white" r="8" cx="-12"/>
-            <circle fill="white" r="8" cx="12"/>
+          <path id="ghost-0" d="M28,4 A28,28 0,0,0 -28,4 L-28,45 L-21,50 L-14,45
+            L-7,50 L0,45 L7,50 L14,45 L21,50 L28,45 Z"/>
+          <path id="ghost-1" d="M28,4 A28,28 0,0,0 -28,4 L-28,50 L-21,45 L-14,50
+            L-7,45 L0,50 L7,45 L14,50 L21,45 L28,50 Z"/>
+          <g id="eye-sockets">
+            <circle r="8" cx="-12"/>
+            <circle r="8" cx="12"/>
           </g>
+          <path id="nose" d="M-4,0 L-4,12 A4,4 0,0,0 4,12 L4,0"/>
+          <g id="mouth">
+            <rect width="32" height="8" x="-16" y="24" rx="4" ry="4"/>
+            <line x1="-8" x2="-8" y1="26" y2="30"/>
+            <line y1="26" y2="30"/>
+            <line x1="8" x2="8" y1="26" y2="30"/>
+          </g>
+          <polyline id="moustache"
+            points="-16,18 -12,20 -6,18 0,20 6,18 12,20 16,18"/>
+          <path id="goatee" d="M-6,36 L0,40 L6,36 Z"/>
         </defs>
         <g clip-path="url(#clip)">
           <rect width="320" height="480" fill="url(#gradient)"/>
-          <g id="ghosts" data-proto="zap.system"/>
-          <g id="eyes" data-proto="$.draggable" data-x="160" data-y="160"
+          <g id="ghosts" data-proto="zap.system" fill="none" stroke-width="4"
+            stroke-linejoin="round"/>
+          <g id="eyes" data-proto="$.eyes" data-x="160" data-y="160"
             data-accel="300" data-decel="-150" data-vmin="0" data-vmax="150"
             data-pupil-radius="4">
             <g transform="translate(-12)">
@@ -53,20 +64,19 @@ body {
             </g>
             <circle class="target" cy="20" r="40" fill-opacity="0"/>
           </g>
-          <g id="minighosts" transform="translate(20, 20)"/>
         </g>
       </svg>
     </div>
 
     <ul class="zap-params">
-      <li data-param="EYES_INVICIBILITY" data-num="3">
+      <li data-param="EYES_INVICIBILITY" data-num="1.2">
       <li data-param="FLOATING" data-num="32">
       <li data-param="GHOST_COLOR" data-tokens="red pink cyan orange">
       <li data-param="GHOST_FRAME_DUR" data-num="0.3">
-      <li data-param="GHOST_OPACITY" data-range="0.5 0.9">
-      <li data-param="GHOST_PERIOD" data-range="0.1 1"/>
+      <li data-param="GHOST_OPACITY" data-range="0.1 0.7">
+      <li data-param="GHOST_PERIOD" data-range="0.075 0.15"/>
       <li data-param="GHOST_RADIUS" data-num="16"/>
-      <li data-param="GHOST_V" data-range="80 120">
+      <li data-param="GHOST_V" data-range="70 210">
       <li data-param="GHOST_X" data-num="348">
       <li data-param="GHOST_Y" data-range="-40 520">
       <li data-param="VOLUME" data-num="0.3">
