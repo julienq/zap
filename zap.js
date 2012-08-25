@@ -494,6 +494,51 @@
   };
 
 
+  // Shapes
+
+  // Create a regular polygon with the number of sides inscribed in a circle of
+  // the given radius, with an optional starting phase (use Math.PI / 2 to have
+  // it pointing up at all times)
+  zap.polygon = function (sides, radius, phase) {
+    return $("svg:polygon",
+        { points: zap.polygon_points(sides, radius, phase) });
+  };
+
+  zap.polygon_points = function (sides, radius, phase) {
+    var points = [];
+    if (phase === undefined) {
+      phase = 0;
+    }
+    for (var i = 0; i < sides; ++i) {
+      points.push(radius * Math.cos(phase));
+      points.push(-radius * Math.sin(phase));
+      phase += 2 * Math.PI / sides;
+    }
+    return points.join(" ");
+  };
+
+  // Same as above but create a star with the given inner radius
+  zap.star = function (sides, ro, ri, phase) {
+    return $("svg:polygon",
+        { points: zap.svg_star_points(sides, ro, ri, phase) });
+  };
+
+  zap.star_points = function (sides, ro, ri, phase) {
+    var points = [];
+    if (phase === undefined) {
+      phase = 0;
+    }
+    sides *= 2;
+    for (var i = 0; i < sides; ++i) {
+      var r = i % 2 === 0 ? ro : ri;
+      points.push(r * Math.cos(phase));
+      points.push(-r * Math.sin(phase));
+      phase += 2 * Math.PI / sides;
+    }
+    return points.join(" ");
+  };
+
+
   function init_number_property(obj, prop, n) {
     if (typeof obj[prop] !== "number") {
       obj[prop] = n;

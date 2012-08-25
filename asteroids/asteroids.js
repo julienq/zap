@@ -1,6 +1,24 @@
 (function () {
   "use strict";
 
+  // TODO hide score when not in game
+  // TODO filter (toggle on/off with F)
+  // TODO improve keyboard controls
+  // TODO touch controls?
+  // TODO select initials for hiscore
+  // TODO music and thrust sound effect
+
+  // TODO powerups -- with a given probability, an asteroid may turn into a
+  // powerup. If destroyed, it behaves like a regular asteroid; but if collided
+  // with, it has a temporary effect such as invicibility, slowing time down,
+  // giving rapid fire, exploding all asteroids, bonus, etc. The powerup should
+  // be time limited as well
+  var POWERUPS = {
+    I: {},  // invicibility
+    S: {},  // slowdown
+    X: {},  // explosion
+  };
+
   // Show additional message (smaller than the main message)
   function addl_message(text) {
     document.getElementById("addl-message").textContent = text;
@@ -186,6 +204,7 @@
     var r = window["$ASTEROID_{0}_R".fmt(size)];
     var r_amp = window["$ASTEROID_{0}_R_AMP".fmt(size)];
     var sectors = window["$ASTEROID_{0}_SECTORS".fmt(size)];
+    this.powerup = Math.random() < $ASTEROID_POWERUP_P;
     this.score = window["$ASTEROID_{0}_SCORE".fmt(size)];
     this.debris = 2 * sectors;
     var points = [];
