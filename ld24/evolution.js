@@ -5,7 +5,7 @@
   $.eyes = Object.create(zap.sprite);
   $.ghost = Object.create(zap.sprite);
 
-  var W, H;
+  var W, H, LEVEL;
 
 
   // Eyes
@@ -33,6 +33,7 @@
         var p = zap.point_from_event(e);
         this.h = zap.rad2deg(Math.atan2(p.y - this.y, p.x - this.x));
         this.a = this.accel;
+        this.p = p;
       }
     } else if (e.type === "mouseup" || e.type === "touchend") {
       if (this.p) {
@@ -102,20 +103,25 @@
   // Create a ghost with random color/position
 
   $.ghost.init = function (elem) {
-    elem.setAttribute("stroke", zap.random_element($GHOST_COLOR));
+    var color = zap.random_element($GHOST_COLOR);
+    elem.setAttribute("stroke", color);
     elem.setAttribute("stroke-opacity", zap.random_number($GHOST_OPACITY));
     this.frame = 0;
     this.next_frame = $GHOST_FRAME_DUR;
     this.shape = elem.appendChild($use("#ghost-0"));
-    // elem.appendChild($use("#eye-sockets"));
-    // elem.appendChild($use("#nose"));
-    // elem.appendChild($use("#mouth"));
-    /*if (Math.random() < $GHOST_MOUSTACHE_P) {
-      elem.appendChild($use("#moustache"));
+    elem.appendChild($use("#eye-sockets"));
+    if (LEVEL[color] > 0) {
+      elem.appendChild($use("#nose"));
+      if (LEVEL[color] > 1) {
+        elem.appendChild($use("#mouth"));
+        if (Math.random() < $GHOST_MOUSTACHE_P) {
+          elem.appendChild($use("#moustache"));
+        }
+        if (Math.random() < $GHOST_GOATEE_P) {
+          elem.appendChild($use("#goatee"));
+        }
+      }
     }
-    if (Math.random() < $GHOST_GOATEE_P) {
-      elem.appendChild($use("#goatee"));
-    }*/
     zap.sprite.init.call(this, elem);
     this.v = zap.random_number($GHOST_V);
     this.h = 180;
@@ -151,6 +157,10 @@
   var vb = cosmos.elem.viewBox.baseVal;
   W = vb.width;
   H = vb.height;
+  LEVEL = {};
+  $GHOST_COLOR.forEach(function (color) {
+    LEVEL[color] = 0;
+  });
 
   // Keep track of current color and opacity
   var update_score = (function () {
@@ -163,6 +173,13 @@
         score.op = 0
       }
       score.op += op;
+      if (color) {
+        var level = Math.floor(score.op / 3);
+        if (level > LEVEL[score.color]) {
+          zap.play_sound("levelup-sound", $VOLUME);
+        }
+        LEVEL[score.color] = level;
+      }
       console.log("Score =", score.op, score.op - Math.floor(score.op));
       for (var i = 0, n = g.childNodes.length, m = Math.ceil(score.op),
         gh = g.firstChild; i < m; ++i, gh = gh.nextSibling) {
