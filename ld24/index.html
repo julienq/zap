@@ -48,7 +48,7 @@ header, footer {
             <circle r="8" cx="-12"/>
             <circle r="8" cx="12"/>
           </g>
-          <path id="nose" d="M-4,0 L-4,12 A4,4 0,0,0 4,12 L4,0"/>
+          <path id="nose" d="M-4,4 L-4,12 A4,4 0,0,0 4,12 L4,4"/>
           <g id="mouth">
             <rect width="32" height="8" x="-16" y="24" rx="4" ry="4"/>
             <line x1="-8" x2="-8" y1="26" y2="30"/>
@@ -61,10 +61,11 @@ header, footer {
         </defs>
         <g clip-path="url(#clip)">
           <rect width="320" height="480" fill="url(#gradient)"/>
+          <g id="score" transform="translate(20, 20) scale(0.4)" data-w="64"/>
           <g id="ghosts" data-proto="zap.system" fill="none" stroke-width="4"
             stroke-linejoin="round"/>
           <g id="eyes" data-proto="$.eyes" data-x="160" data-y="160"
-            data-accel="300" data-decel="-150" data-vmin="0" data-vmax="150"
+            data-accel="300" data-decel="-450" data-vmin="0" data-vmax="200"
             data-pupil-radius="4">
             <g transform="translate(-12)">
               <circle fill="white" stroke="none" r="8"/>
@@ -90,14 +91,17 @@ header, footer {
       <li data-param="EYES_INVICIBILITY" data-num="1.2">
       <li data-param="FLOATING" data-num="32">
       <li data-param="GHOST_COLOR" data-tokens="red pink cyan orange">
+      <li data-param="GHOST_FADE" data-num="0.1">
+      <li data-param="GHOST_GOATEE_P" data-num="0.05">
       <li data-param="GHOST_FRAME_DUR" data-num="0.3">
+      <li data-param="GHOST_MOUSTACHE_P" data-num="0.2">
       <li data-param="GHOST_OPACITY" data-range="0.1 0.7">
-      <li data-param="GHOST_PERIOD" data-range="0.075 0.15"/>
+      <li data-param="GHOST_PERIOD" data-range="0.075 0.15">
       <li data-param="GHOST_RADIUS" data-num="16"/>
       <li data-param="GHOST_V" data-range="70 210">
       <li data-param="GHOST_X" data-num="348">
       <li data-param="GHOST_Y" data-range="-40 520">
-      <li data-param="VOLUME" data-num="0.3">
+      <li data-param="VOLUME" data-num="0.2">
     </ul>
 
     <audio id="catch-sound" src="catch.wav" preload="auto"></audio>
@@ -107,4 +111,3 @@ header, footer {
     <script src="evolution.js"></script>
   </body>
 </html>
-

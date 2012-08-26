@@ -26,9 +26,8 @@
   // Drag the eyes around when they are not in a ghost
   $.eyes.handleEvent = function (e) {
     if (e.type === "mousedown" || e.type === "touchstart") {
-      if (!this.ghost) {
-        this.p = zap.point_from_event(e);
-      }
+      e.preventDefault();
+      this.p = zap.point_from_event(e);
     } else if (e.type === "mousemove" || e.type === "touchmove") {
       if (this.p) {
         var p = zap.point_from_event(e);
@@ -43,8 +42,6 @@
     }
   };
 
-  // Update the eyes: check invicibility status; wrap around the screen; follow
-  // a ghost when captured
   $.eyes.will_update = function (dt) {
     if (this.invicibility > 0) {
       this.invicibility -= dt;
@@ -63,9 +60,16 @@
       this.$left.y = 0;
       this.$right.x = 0;
       this.$right.y = 0;
-      if (this.ghost) {
-        this.x = this.ghost.x;
-        this.y = this.ghost.y;
+    }
+    if (this.ghost) {
+      var op = parseFloat(this.ghost.elem.getAttribute("stroke-opacity")) -
+        $GHOST_FADE * dt;
+      if (op <= 0) {
+        this.release(true);
+      } else {
+        this.ghost.elem.setAttribute("stroke-opacity", op);
+        this.ghost.x = this.x;
+        this.ghost.y = this.y;
       }
     }
   };
@@ -78,17 +82,20 @@
 
   $.eyes.capture = function (ghost) {
     this.ghost = ghost;
+    this.ghost.v = 0;
     zap.play_sound("catch-sound", $VOLUME);
-    delete this.p;
-    this.a = 0;
-    this.v = 0;
+    update_score(parseFloat(this.ghost.elem.getAttribute("stroke-opacity")),
+        this.ghost.elem.getAttribute("stroke"));
     return this;
   };
 
-  $.eyes.release = function () {
+  $.eyes.release = function (free) {
+    this.ghost.remove_self();
     delete this.ghost;
-    cosmos.$eyes.x = W / 2;
-    cosmos.$eyes.invicible();
+    if (free) {
+      cosmos.$eyes.invicible();
+      update_score(0);
+    }
   };
 
 
@@ -103,8 +110,12 @@
     // elem.appendChild($use("#eye-sockets"));
     // elem.appendChild($use("#nose"));
     // elem.appendChild($use("#mouth"));
-    // elem.appendChild($use("#moustache"));
-    // elem.appendChild($use("#goatee"));
+    /*if (Math.random() < $GHOST_MOUSTACHE_P) {
+      elem.appendChild($use("#moustache"));
+    }
+    if (Math.random() < $GHOST_GOATEE_P) {
+      elem.appendChild($use("#goatee"));
+    }*/
     zap.sprite.init.call(this, elem);
     this.v = zap.random_number($GHOST_V);
     this.h = 180;
@@ -122,10 +133,6 @@
           "#ghost-{0}".fmt(this.frame));
     }
     if (this.x < W - $GHOST_X) {
-      if (this.eyes) {
-        this.eyes.release();
-        delete this.eyes;
-      }
       this.remove_self();
     }
   };
@@ -135,11 +142,8 @@
   $.ghost.will_update = function (dt) {
     this.x += zap.random_number(-dt * $FLOATING, dt * $FLOATING);
     this.y += zap.random_number(-dt * $FLOATING, dt * $FLOATING);
-    if (!cosmos.$eyes.ghost && cosmos.$eyes.invicibility < 0 &&
-        cosmos.$eyes.a <= 0 && zap.dist(this, cosmos.$eyes) < $GHOST_RADIUS) {
-      this.eyes = cosmos.$eyes.capture(this);
-    }
   };
+
 
   // Initialize the cosmos
   var cosmos = $.cosmos = Object.create(zap.cosmos).init();
@@ -148,13 +152,60 @@
   W = vb.width;
   H = vb.height;
 
+  // Keep track of current color and opacity
+  var update_score = (function () {
+    var score = { op: 0 };
+    var g = document.getElementById("score"); 
+    return function update_score(op, color) {
+      if (color !== score.color) {
+        zap.remove_children(g);
+        score.color = color;
+        score.op = 0
+      }
+      score.op += op;
+      console.log("Score =", score.op, score.op - Math.floor(score.op));
+      for (var i = 0, n = g.childNodes.length, m = Math.ceil(score.op),
+        gh = g.firstChild; i < m; ++i, gh = gh.nextSibling) {
+        if (!gh) {
+          gh = g.appendChild($use("#ghost-{0}".fmt(Math.random() < 0.5 ? 0 : 1),
+            { x: g.dataset.w * i, fill: score.color }));
+        }
+        gh.setAttribute("fill-opacity",
+          i < m - 1 ? 1 : score.op - Math.floor(score.op));
+      }
+    }
+  }());
+
   cosmos.will_update = function (dt) {
+    if (this.$eyes.invicibility < 0 && this.$eyes.a <= 0) {
+      var max_ghost = this.$eyes.ghost;
+      var max_op = max_ghost ?
+        parseFloat(max_ghost.elem.getAttribute("stroke-opacity")) : 0;
+      this.$ghosts.children.forEach(function (ghost) {
+        if (zap.dist(ghost, this.$eyes) < $GHOST_RADIUS) {
+          var op = parseFloat(ghost.elem.getAttribute("stroke-opacity"));
+          if (op > max_op) {
+            max_op = op;
+            max_ghost = ghost;
+          }
+        }
+      }, this);
+      if (max_ghost && max_ghost !== this.$eyes.ghost) {
+        if (this.$eyes.ghost) {
+          this.$eyes.release(false);
+        }
+        this.$eyes.capture(max_ghost);
+      }
+    }
     this.next_ghost -= dt;
     if (this.next_ghost < 0) {
       this.next_ghost = zap.random_number($GHOST_PERIOD);
       this.$ghosts.append_child(Object.create($.ghost).init($g()));
     }
   };
+
+
+  // Pause and resume buttons
 
   $.pause = function () {
     cosmos.running = false;
