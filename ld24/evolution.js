@@ -156,4 +156,16 @@
     }
   };
 
+  $.pause = function () {
+    cosmos.running = false;
+    document.getElementById("pause").classList.add("hidden");
+    document.getElementById("resume").classList.remove("hidden");
+  };
+
+  $.resume = function () {
+    cosmos.running = true;
+    document.getElementById("pause").classList.remove("hidden");
+    document.getElementById("resume").classList.add("hidden");
+  };
+
 }.call(this.evolution = {}));

@@ -13,9 +13,23 @@
 body {
   background-color: black;
 }
+header, footer {
+  font-family: Univers, "Helvetica Neue", Helvetica, sans-serif;
+  color: #7cea34;
+  padding: 0.5em 0;
+  text-align: center;
+}
+.button {
+  cursor: pointer;
+}
+.hidden {
+  display: none;
+}
     </style>
   </head>
   <body class="zap-frame" ontouchstart="event.preventDefault();">
+    <header>
+    </header>
     <div class="zap-content">
       <svg class="zap-full" viewBox="0 0 320 480" data-running="true">
         <defs>
@@ -67,6 +81,10 @@ body {
         </g>
       </svg>
     </div>
+    <footer>
+      <span class="button" id="pause" onclick="$.pause();">Pause</span>
+      <span class="button hidden" id="resume" onclick="$.resume()">Resume</span>
+    </footer>
 
     <ul class="zap-params">
       <li data-param="EYES_INVICIBILITY" data-num="1.2">
