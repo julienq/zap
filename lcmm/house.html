@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Houses</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="cache-control" content="no-cache">
+    <link rel="stylesheet" href="../zap.css">
+  </head>
+    <style>
+body {
+  background-color: black;
+}
+    </style>
+  <body>
+  <body class="zap-frame" ontouchstart="event.preventDefault();">
+    <div class="zap-content">
+      <svg class="zap-full" viewBox="0 0 480 320" data-running="true">
+        <defs>
+          <clipPath id="clip">
+            <rect id="bg" width="480" height="320" rx="20" ry="20"/>
+          </clipPath>
+          <linearGradient id="gradient" y2="100%" x2="0%">
+            <stop offset="0%" stop-color="#008eff" />
+            <stop offset="100%" stop-color="#00ff1a" />
+          </linearGradient>
+        </defs>
+        <!--
+        <g clip-path="url(#clip)">
+        -->
+        <g>
+          <rect width="480" height="320" fill="url(#gradient)"/>
+        </g>
+      </svg>
+    </div>
+    <script src="../zap.js"></script>
+    <script>
+"use strict";
+
+function house() {
+  var w = zap.random_int(40, 50);
+  var h = zap.random_int(40, 60);
+  var x = w / 4;
+  var y = h / 2;
+  if (Math.random() < 0.25) {
+    var top_window =
+      $rect({ x: 2 * x / 5, y: y - 2 * x / 5, width: x / 5, height: x / 5 });
+  }
+  var h = $g({ stroke: "white", "stroke-linejoin": "round", fill: "none" },
+    $polygon({ points: "{0},0 0,{1} 0,{2} {3},{2}, {3},{1}"
+      .fmt(x / 2, y, h, x) }),
+    $rect({ x: x, y: y, width: w - x, height: h - y }),
+    $polygon({ points: "{0},0 {1},0 {2},{3} {4},{3}"
+      .fmt(x / 2, w - x / 2, w, y, x) }),
+    top_window,
+    $rect({ x: x / 3, y: h - y / 2, width: x / 3, height: y / 2 }));
+  /*var windows = zap.random_int(1, 3);
+  var w_ = (w - x) / 6;
+  for (var i = 0; i < windows; ++i) {
+    h.appendChild($rect({ x: x + i * 2 * w_ + w_, y: y + w_, width: w_, height: w_ }));
+  }*/
+  return h;
+}
+
+var g = document.querySelector("g");
+for (var i = 0; i < 6; ++i) {
+  for (var j = 0; j < 4; ++j) {
+    var h = house();
+    var x = 10 + i * 80 + zap.random_int(10);
+    var y = 10 + j * 80 + zap.random_int(10);
+    if (Math.random() < 0.5) {
+      h.setAttribute("transform", "translate({0}, {1})".fmt(x, y));
+    } else {
+      h.setAttribute("transform", "scale(-1, 1) translate({0}, {1})"
+        .fmt(-(x + 45), y));
+    }
+    g.appendChild(h);
+  }
+}
+
+
+    </script>
+  </body>
+</html>
