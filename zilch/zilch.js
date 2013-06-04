@@ -109,7 +109,11 @@ function Map(size) {
 }
 
 Map.prototype.z = function (x, y) {
-  return Math.random();
+  return x == 0 || y == 0 ? 0 : Math.random();
+  /*var dx = this.size / 2 - x;
+  var dy = this.size / 2 - y;
+  var d = Math.sqrt(dx * dx + dy * dy);
+  return (Math.sqrt(2) * this.size / 2 - d) / 2 - Math.random();*/
 };
 
 Map.prototype.tree = function (x, y) {
@@ -165,12 +169,16 @@ function Box(svg, box, size) {
   var h = w / 2;
   var v = h;
   var offset = vb.height - (2 * h * SZ - h);
+  this.x = 0;
+  this.y = 0;
   this.transform_point = function (x, y, z) {
     if (z instanceof Map) {
       z = z.tile(x, y).z;
     } else if (typeof z != "number" || isNaN(z)) {
       z = 0;
     }
+    x -= this.x;
+    y -= this.y;
     return [(x - y) * w, offset + (x + y) * h - z * v];
   };
 };
@@ -178,6 +186,7 @@ function Box(svg, box, size) {
 var push = Array.prototype.push;
 
 Box.prototype.draw_map = function (map) {
+  clear(this.tiles);
   this.draw_frame(map);
   this.draw_tiles(map);
 };
@@ -185,15 +194,17 @@ Box.prototype.draw_map = function (map) {
 Box.prototype.draw_frame = function(map) {
   var points = [];
   var sz = this.size - 1;
-  push.apply(points, this.transform_point(sz, sz, -1));
-  push.apply(points, this.transform_point(0, sz, -1));
+  var x_ = this.size - 1 + this.x;
+  var y_ = this.size - 1 + this.y;
+  push.apply(points, this.transform_point(x_, y_, -1));
+  push.apply(points, this.transform_point(this.x, y_, -1));
   for (var x = 0; x < this.size; ++x) {
-    push.apply(points, this.transform_point(x, sz, map));
+    push.apply(points, this.transform_point(x + this.x, y_, map));
   }
   for (var y = sz - 1; y >= 0; --y) {
-    push.apply(points, this.transform_point(sz, y, map));
+    push.apply(points, this.transform_point(x_, y + this.y, map));
   }
-  push.apply(points, this.transform_point(sz, 0, -1));
+  push.apply(points, this.transform_point(x_, this.y, -1));
   return this.tiles.appendChild(el("polyline", { fill: "#333",
     points: points.join(" ")}));
 }
@@ -201,17 +212,19 @@ Box.prototype.draw_frame = function(map) {
 Box.prototype.draw_tiles = function (map) {
   var sz = this.size - 1;
   for (var x = 0, y = 0; x < sz && y < sz;) {
+    var x_ = x + this.x;
+    var y_ = y + this.y;
     var g = this.tiles.appendChild(el("g"));
     var tile = g.appendChild(el("path"));
     var points = [];
-    push.apply(points, this.transform_point(x, y, map));
-    push.apply(points, this.transform_point(x + 1, y, map));
-    push.apply(points, this.transform_point(x + 1, y + 1, map));
-    push.apply(points, this.transform_point(x, y + 1, map));
-    var color = map.tile(x, y).color;
+    push.apply(points, this.transform_point(x_, y_, map));
+    push.apply(points, this.transform_point(x_ + 1, y_, map));
+    push.apply(points, this.transform_point(x_ + 1, y_ + 1, map));
+    push.apply(points, this.transform_point(x_, y_ + 1, map));
+    var color = map.tile(x_, y_).color;
     g.appendChild(el("path", { fill: color, stroke: color,
       d: String.prototype.fmt.apply("M%0,%1L%2,%3L%4,%5L%6,%7Z", points) }));
-    this.draw_tree(g, map.tile(x, y).tree);
+    this.draw_tree(g, map.tile(x_, y_).tree);
     ++x;
     --y;
     if (x == sz) {
@@ -239,8 +252,28 @@ Box.prototype.draw_tree = function (g, tree) {
 
 var box = new Box(document.querySelector("svg svg"),
     document.querySelector(".box"), SZ);
-var map = new Map(SZ  / 2);
+var map = new Map(SZ * 3);
+box.x = SZ;
+box.y = SZ;
 box.draw_map(map);
+
+document.addEventListener("keydown", function (e) {
+  if (e.keyCode == 37) {
+    --box.x;
+    box.draw_map(map);
+  } else if (e.keyCode == 39) {
+    ++box.x;
+    box.draw_map(map);
+  }
+  if (e.keyCode == 38) {
+    --box.y;
+    box.draw_map(map);
+  } else if (e.keyCode == 40) {
+    ++box.y;
+    box.draw_map(map);
+  }
+}, false);
+
 
 /*
 var player = { x: random_int(0, SZ - 2) + Math.random(),
