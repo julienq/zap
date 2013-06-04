@@ -89,8 +89,9 @@ var g = document.getElementById("grid");
 var w = vb.width / (SZ - 1) / 2;
 var h = w / 2;
 var v = h;
+var offset = vb.height - (2 * h * SZ - h);
 function transform_point(x, y, z) {
-  return [(x - y) * w, (x + y) * h - z * v];
+  return [(x - y) * w, offset + (x + y) * h - z * v];
 }
 
 function mean_z(map, x, y) {
@@ -103,58 +104,66 @@ function mean_z(map, x, y) {
   return z0 * (y1 - y) + z1 * (y - y0);
 }
 
-(function draw_map(map, g, tr) {
-  var frame = g.appendChild(document
-    .createElementNS("http://www.w3.org/2000/svg", "polyline"));
-  frame.setAttribute("stroke", "white");
-  frame.setAttribute("fill", "none");
-  var p0 = transform_point(0, SZ - 1, map[SZ - 1][0].z);
-  var p1 = transform_point(0, SZ - 1, -1);
-  var p2 = transform_point(SZ - 1, SZ - 1, -1);
-  var p3 = transform_point(SZ - 1, SZ - 1, map[SZ - 1][SZ - 1].z);
-  var p4 = transform_point(SZ - 1, 0, -1);
-  var p5 = transform_point(SZ - 1, 0, map[0][SZ - 1].z);
-  frame.setAttribute("points", "%0,%1 %2,%3 %4,%5 %6,%7 %4,%5 %8,%9 %10,%11"
-    .fmt(p0[0], p0[1], p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], p4[0], p4[1],
-      p5[0], p5[1]));
-  for (var y = 0; y < SZ - 1; ++y) {
-    for (var x = 0; x < SZ - 1; ++x) {
-      var p = transform_point(x, y, map[y][x].z);
-      var q = transform_point(x + 1, y, map[y][x + 1].z);
-      var r = transform_point(x + 1, y + 1, map[y + 1][x + 1].z);
-      var s = transform_point(x, y + 1, map[y + 1][x].z);
-      var e = g.appendChild(document
-        .createElementNS("http://www.w3.org/2000/svg", "path"));
-      e.setAttribute("fill", map[y][x].color);
-      e.setAttribute("stroke", map[y][x].color);
-      e.setAttribute("d", "M%0,%1L%2,%3L%4,%5L%6,%7Z".fmt(p[0], p[1], q[0],
-          q[1], r[0], r[1], s[0], s[1]));
-      if (map[y][x].tree) {
-        var xt = x + Math.random();
-        var yt = y + Math.random();
-        var zt = mean_z(map, xt, yt);
-        var p_ = transform_point(xt, yt, zt);
-        var tree = tr.appendChild(document
-          .createElementNS("http://www.w3.org/2000/svg", "g"));
-        var trunk = tree.appendChild(document
-          .createElementNS("http://www.w3.org/2000/svg", "line"));
-        trunk.setAttribute("x1", p_[0]);
-        trunk.setAttribute("x2", p_[0]);
-        trunk.setAttribute("y1", p_[1]);
-        p_[1] -= (0.5 + Math.random() / 2) * v;
-        trunk.setAttribute("y2", p_[1]);
-        trunk.setAttribute("stroke", "#444");
-        var leaves = tree.appendChild(document
-          .createElementNS("http://www.w3.org/2000/svg", "circle"));
-        leaves.setAttribute("cx", p_[0]);
-        leaves.setAttribute("cy", p_[1]);
-        leaves.setAttribute("r", v * 0.35);
-        leaves.setAttribute("fill", "hsl(%0,%1%,%2%)".fmt(random_int(105, 135),
-              random_int(75, 100), random_int(25, 50)));
-      }
+function el(name, attrs) {
+  var elem = document.createElementNS("http://www.w3.org/2000/svg", name);
+  for (var attr in attrs) {
+    elem.setAttribute(attr, attrs[attr]);
+  }
+  return elem;
+}
+
+var push = Array.prototype.push;
+
+(function draw_map(map, g) {
+  var frame = g.appendChild(el("polyline", { fill: "#333" }));
+  var points = [];
+  push.apply(points, transform_point(SZ - 1, SZ - 1, -1));
+  push.apply(points, transform_point(0, SZ - 1, -1));
+  for (var x = 0; x < SZ; ++x) {
+    push.apply(points, transform_point(x, SZ - 1, map[SZ - 1][x].z));
+  }
+  for (var y = SZ - 2; y >= 0; --y) {
+    push.apply(points, transform_point(SZ - 1, y, map[y][SZ - 1].z));
+  }
+  push.apply(points, transform_point(SZ - 1, 0, -1));
+  frame.setAttribute("points", points.join(" "));
+  for (var x = 0, y = 0; x < SZ - 1 && y < SZ - 1;) {
+    console.log(x, y);
+    var g_ = g.appendChild(el("g"));
+    var e = g_.appendChild(el("path"));
+    var p = transform_point(x, y, map[y][x].z);
+    var q = transform_point(x + 1, y, map[y][x + 1].z);
+    var r = transform_point(x + 1, y + 1, map[y + 1][x + 1].z);
+    var s = transform_point(x, y + 1, map[y + 1][x].z);
+    e.setAttribute("fill", map[y][x].color);
+    e.setAttribute("stroke", map[y][x].color);
+    e.setAttribute("d", "M%0,%1L%2,%3L%4,%5L%6,%7Z".fmt(p[0], p[1], q[0], q[1],
+          r[0], r[1], s[0], s[1]));
+    if (map[y][x].tree) {
+      var xt = x + Math.random();
+      var yt = y + Math.random();
+      var zt = mean_z(map, xt, yt);
+      var p_ = transform_point(xt, yt, zt);
+      var tree = g_.appendChild(el("g"));
+      var trunk = tree.appendChild(el("line", { x1: p_[0], x2: p_[0],
+        y1: p_[1], stroke: "#444" }));
+      p_[1] -= (0.5 + Math.random() / 2) * v;
+      trunk.setAttribute("y2", p_[1]);
+      tree.appendChild(el("circle", { cx: p_[0], cy: p_[1],
+        r: v * 0.35, fill: "hsl(%0,%1%,%2%)".fmt(random_int(105, 135),
+          random_int(75, 100), random_int(25, 50)) }));
+    }
+    ++x;
+    --y;
+    if (x == SZ - 1) {
+      x = y + 2;
+      y = SZ - 2;
+    } else if (y == -1) {
+      y = x;
+      x = 0;
     }
   }
-}(map, g, document.getElementById("trees")));
+}(map, g));
 
 /*
 var player = { x: random_int(0, SZ - 2) + Math.random(),
