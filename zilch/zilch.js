@@ -43,6 +43,7 @@ String.prototype.fmt = function () {
   var $line = el.bind(this, "line");
   var $path = el.bind(this, "path");
   var $polyline = el.bind(this, "polyline");
+  var $rect = el.bind(this, "rect");
 
   function random_number(min, max) {
     if (arguments.length == 1) {
@@ -249,7 +250,9 @@ String.prototype.fmt = function () {
     var offset = vb.height - (2 * h * SZ - h);
     this.x = 0;
     this.y = 0;
-    this.drag = new Drag(this.svg);
+    var mask = svg.appendChild($rect({ x: vb.x, y: vb.y, width: vb.width,
+      height: vb.height, "fill-opacity": 0 }));
+    this.drag = new Drag(mask);
     this.drag.transform = function (x, y) {
       var p = svg.createSVGPoint();
       p.x = x;
@@ -357,8 +360,8 @@ String.prototype.fmt = function () {
   };
 
   box.drag.ondrag = function (x, y) {
-    var xx = Math.round(this.__x0 - x);
-    var yy = Math.round(this.__y0 - y);
+    var xx = Math.round(this.__x0 - x / 2);
+    var yy = Math.round(this.__y0 - y / 2);
     if (xx != box.x || yy != box.y) {
       box.x = xx;
       box.y = yy;
