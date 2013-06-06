@@ -49,37 +49,38 @@ var request_animation_frame = (window.requestAnimationFrame ||
     }, 16);
   }).bind(window);
 
-function Dragger(target) {
+function Drag(target) {
   target.addEventListener("mousedown", this, false);
 };
 
-Dragger.prototype.ondrag = function () {};
-
-Dragger.prototype.reset = function () {
-  this._x = this.__x;
-  this._y = this.__y;
+Drag.prototype.transform = function (x, y) {
+  return [x, y];
 };
 
-Dragger.prototype.handleEvent = function (e) {
+Drag.prototype.onstart = function () {};
+Drag.prototype.ondrag = function () {};
+Drag.prototype.onend = function () {};
+
+Drag.prototype.handleEvent = function (e) {
   if (e.type == "mousedown") {
     e.preventDefault();
-    this._x = e.clientX;
-    this._y = e.clientY;
-    document.addEventListener("mousemove", this, false);
-    document.addEventListener("mouseup", this, false);
+    this._p = this.transform(e.clientX, e.clientY);
+    if (this._p) {
+      document.addEventListener("mousemove", this, false);
+      document.addEventListener("mouseup", this, false);
+      this.onstart(this._p[0], this._p[1]);
+    }
   } else if (e.type == "mousemove") {
-    this.__x = e.clientX;
-    this.__y = e.clientY;
-    this._tx = this.__x - this._x;
-    this._ty = this.__y - this._y;
-    this.ondrag(e.clientX - this._x, e.clientY - this._y);
+    this.__p = this.transform(e.clientX, e.clientY);
+    if (this.__p) {
+      this.ondrag(this.__p[0] - this._p[0], this.__p[1] - this._p[1]);
+    }
   } else if (e.type == "mouseup") {
-    delete this._x;
-    delete this._y;
-    delete this.__x;
-    delete this.__y;
+    delete this._p;
+    delete this.__p;
     document.removeEventListener("mousemove", this, false);
     document.removeEventListener("mouseup", this, false);
+    this.onend();
   }
 };
 
@@ -171,6 +172,17 @@ function Box(svg, box, size) {
   var offset = vb.height - (2 * h * SZ - h);
   this.x = 0;
   this.y = 0;
+  this.drag = new Drag(this.svg);
+  this.drag.transform = function (x, y) {
+    var p = svg.createSVGPoint();
+    p.x = x;
+    p.y = y;
+    try {
+      p = p.matrixTransform(svg.getScreenCTM().inverse());
+      var y_ = (p.y - offset) / (2 * h) - p.x / (2 * w);
+      return [p.x / w + y_, y_];
+    } catch(e) {}
+  };
   this.transform_point = function (x, y, z) {
     if (z instanceof Map) {
       z = z.tile(x, y).z;
@@ -221,6 +233,7 @@ Box.prototype.draw_tiles = function (map) {
     push.apply(points, this.transform_point(x_ + 1, y_, map));
     push.apply(points, this.transform_point(x_ + 1, y_ + 1, map));
     push.apply(points, this.transform_point(x_, y_ + 1, map));
+    // TODO return a function for the color so that it is animated
     var color = map.tile(x_, y_).color;
     g.appendChild(el("path", { fill: color, stroke: color,
       d: String.prototype.fmt.apply("M%0,%1L%2,%3L%4,%5L%6,%7Z", points) }));
@@ -257,22 +270,25 @@ box.x = SZ;
 box.y = SZ;
 box.draw_map(map);
 
-document.addEventListener("keydown", function (e) {
-  if (e.keyCode == 37) {
-    --box.x;
-    box.draw_map(map);
-  } else if (e.keyCode == 39) {
-    ++box.x;
-    box.draw_map(map);
-  }
-  if (e.keyCode == 38) {
-    --box.y;
-    box.draw_map(map);
-  } else if (e.keyCode == 40) {
-    ++box.y;
+box.drag.onstart = function (x, y) {
+  this.__x0 = box.x;
+  this.__y0 = box.y;
+};
+
+box.drag.ondrag = function (x, y) {
+  var xx = Math.round(this.__x0 - x);
+  var yy = Math.round(this.__y0 - y);
+  if (xx != box.x || yy != box.y) {
+    box.x = xx;
+    box.y = yy;
     box.draw_map(map);
   }
-}, false);
+};
+
+box.drag.end = function () {
+  delete this.__x0;
+  delete this.__y0;
+};
 
 
 /*
