@@ -50,7 +50,9 @@ var request_animation_frame = (window.requestAnimationFrame ||
   }).bind(window);
 
 function Drag(target) {
-  target.addEventListener("mousedown", this, false);
+  this.target = target;
+  this.target.addEventListener("mousedown", this, false);
+  this.target.addEventListener("touchstart", this, false);
 };
 
 Drag.prototype.transform = function (x, y) {
@@ -70,8 +72,24 @@ Drag.prototype.handleEvent = function (e) {
       document.addEventListener("mouseup", this, false);
       this.onstart(this._p[0], this._p[1]);
     }
+  } else if (e.type == "touchstart") {
+    e.preventDefault();
+    e.stopPropagation();
+    this._p = this.transform(e.targetTouches[0].clientX,
+        e.targetTouches[0].clientY);
+    if (this._p) {
+      this.target.addEventListener("touchmove", this, false);
+      this.target.addEventListener("touchend", this, false);
+      this.onstart(this._p[0], this._p[1]);
+    }
   } else if (e.type == "mousemove") {
     this.__p = this.transform(e.clientX, e.clientY);
+    if (this.__p) {
+      this.ondrag(this.__p[0] - this._p[0], this.__p[1] - this._p[1]);
+    }
+  } else if (e.type == "touchmove") {
+    this.__p = this.transform(e.targetTouches[0].clientX,
+        e.targetTouches[0].clientY);
     if (this.__p) {
       this.ondrag(this.__p[0] - this._p[0], this.__p[1] - this._p[1]);
     }
@@ -80,6 +98,12 @@ Drag.prototype.handleEvent = function (e) {
     delete this.__p;
     document.removeEventListener("mousemove", this, false);
     document.removeEventListener("mouseup", this, false);
+    this.onend();
+  } else if (e.type == "touchend") {
+    delete this._p;
+    delete this.__p;
+    this.target.removeEventListener("touchmove", this, false);
+    this.target.removeEventListener("touchend", this, false);
     this.onend();
   }
 };
@@ -263,8 +287,8 @@ Box.prototype.draw_tree = function (g, tree) {
     fill: tree.color }));
 };
 
-var box = new Box(document.querySelector("svg svg"),
-    document.querySelector(".box"), SZ);
+var gbox = document.querySelector(".box");
+var box = new Box(gbox.parentNode, gbox, SZ);
 var map = new Map(SZ * 3);
 box.x = SZ;
 box.y = SZ;
