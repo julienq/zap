@@ -1,189 +1,8 @@
 "use strict";
 
-String.prototype.fmt = function () {
-  var args = arguments;
-  return this.replace(/%(\d+|%|\((\d+)\))/g, function (_, p, pp) {
-    var p_ = parseInt(pp || p, 10);
-    return p == "%" ? "%" : args[p_] == null ? "" : args[p_];
-  });
-};
-
 (function (zilch) {
 
-  function clear(elem) {
-    while (elem.firstChild) {
-      elem.removeChild(elem.firstChild);
-    }
-  }
-
-  function append_children(elem, children) {
-    if (children instanceof window.Node) {
-      elem.appendChild(children);
-    } else if (Array.isArray(children)) {
-      children.forEach(append_children.bind(this, elem));
-    }
-  }
-
-  function el(name, attrs) {
-    var elem = document.createElementNS("http://www.w3.org/2000/svg", name);
-    for (var attr in attrs) {
-      elem.setAttribute(attr, attrs[attr]);
-    }
-    for (var i = 2, n = arguments.length; i < n; ++i) {
-      append_children(elem, arguments[i]);
-    }
-    return elem;
-  }
-
-  var $circle = el.bind(this, "circle");
-  var $g = el.bind(this, "g");
-  var $line = el.bind(this, "line");
-  var $path = el.bind(this, "path");
-  var $polyline = el.bind(this, "polyline");
-  var $rect = el.bind(this, "rect");
-
-  function random_number(min, max) {
-    if (arguments.length == 1) {
-      max = min;
-      min = 0;
-    }
-    return min + Math.random() * (max - min);
-  }
-
-  function random_int(min, max) {
-    if (arguments.length == 1) {
-      max = min;
-      min = 0;
-    }
-    return min + Math.floor(Math.random() * (max + 1 - min));
-  }
-
-  var request_animation_frame = (window.requestAnimationFrame ||
-      window.webkitRequestAnimationFrame ||
-      window.mozRequestAnimationFrame ||
-      window.msRequestAnimationFrame ||
-      function (f) {
-        return window.setTimeout(function () {
-          f(Date.now());
-        }, 15);
-      }).bind(window);
-  var cancel_animation_frame = (window.cancelAnimationFrame ||
-      window.webkitCancelAnimationFrame ||
-      window.mozCancelAnimationFrame ||
-      window.msCancelAnimationFrame ||
-      window.clearTimeout).bind(window);
-
-  var Loop = function () {
-    this._every = [];
-    this._at = [];
-    this.update = function () {
-      this.elapsed = Date.now() - this.start;
-      for (var i = this._at.length - 1;
-          i >= 0 && this._at[i][0] <= this.elapsed; --i);
-      this._at.splice(i + 1).forEach(function (at) {
-        at[1].call(this);
-      }, this);
-      this.req = request_animation_frame(this.update);
-    }.bind(this);
-    this.start = Date.now();
-    this.update();
-  };
-
-  Loop.prototype.at = function (f, t) {
-    for (var i = this._at.length - 1; i >= 0 && this._at[i][0] < t; --i);
-    this._at.splice(i, 0, [t, f]);
-  };
-
-  Loop.prototype.every = function (f, dur) {
-    var f_ = function () {
-      var d = f_.next - this.elapsed + dur;
-      f_.next += dur;
-      this.at(f_, this.elapsed + d);
-      f.call(this, this.elapsed - f_.last);
-      f_.last = this.elapsed;
-    };
-    f_.last = this.elapsed;
-    f_.next = this.elapsed;
-    this.at(f_, this.elapsed);
-  };
-
-  Loop.prototype.pause = function () {
-    if (this.req) {
-      cancel_animation_frame(this.req);
-      delete this.req;
-    }
-  };
-
-  Loop.prototype.resume = function () {
-    if (!this.req) {
-      this.start = Date.now() - (this.elapsed || 0);
-      this.update();
-    }
-  };
-
-  function nop() {}
-
-  function Drag(target) {
-    this.target = target;
-    this.target.addEventListener("mousedown", this, false);
-    this.target.addEventListener("touchstart", this, false);
-  };
-
-  Drag.prototype.transform = function (x, y) {
-    return [x, y];
-  };
-
-  Drag.prototype.onstart = nop;
-  Drag.prototype.ondrag = nop;
-  Drag.prototype.onend = nop;
-
-  Drag.prototype.handleEvent = function (e) {
-    if (e.type == "mousedown") {
-      e.preventDefault();
-      this._p = this.transform(e.clientX, e.clientY);
-      if (this._p) {
-        document.addEventListener("mousemove", this, false);
-        document.addEventListener("mouseup", this, false);
-        this.onstart(this._p[0], this._p[1]);
-      }
-    } else if (e.type == "touchstart") {
-      e.preventDefault();
-      e.stopPropagation();
-      this._p = this.transform(e.targetTouches[0].clientX,
-          e.targetTouches[0].clientY);
-      if (this._p) {
-        this.target.addEventListener("touchmove", this, false);
-        this.target.addEventListener("touchend", this, false);
-        this.onstart(this._p[0], this._p[1]);
-      }
-    } else if (e.type == "mousemove") {
-      this.__p = this.transform(e.clientX, e.clientY);
-      if (this.__p) {
-        this.ondrag(this.__p[0] - this._p[0], this.__p[1] - this._p[1]);
-      }
-    } else if (e.type == "touchmove") {
-      this.__p = this.transform(e.targetTouches[0].clientX,
-          e.targetTouches[0].clientY);
-      if (this.__p) {
-        this.ondrag(this.__p[0] - this._p[0], this.__p[1] - this._p[1]);
-      }
-    } else if (e.type == "mouseup") {
-      delete this._p;
-      delete this.__p;
-      document.removeEventListener("mousemove", this, false);
-      document.removeEventListener("mouseup", this, false);
-      this.onend();
-    } else if (e.type == "touchend") {
-      delete this._p;
-      delete this.__p;
-      this.target.removeEventListener("touchmove", this, false);
-      this.target.removeEventListener("touchend", this, false);
-      this.onend();
-    }
-  };
-
   var SZ = 13;
-
   var TREE_PROBABILITY = 0.35;
 
   function Map(size) {
@@ -220,33 +39,34 @@ String.prototype.fmt = function () {
       x += Math.random();
       y += Math.random();
       var z = this.mean_z(x, y);
-      var h = random_number(0.5, 1);
+      var h = zap.random_number(0.5, 1);
       return { x: x, y: y, z: z, color: this.tree_color(x, y), h : h,
-        r: random_number(0.25, 0.5) };
+        r: zap.random_number(0.25, 0.5) };
     }
   };
 
   Map.prototype.land_color = function (x, y, z) {
-    // return "hsl(%0,%1%,%2%)".fmt(random_int(345, 375) % 360,
-    //    random_int(75, 100), random_int(35, 65));
-    // return "hsl(%0,%1%,%2%)".fmt(random_int(165, 195), random_int(0, 50),
-    //    random_int(85, 100));
-    return "hsl(%0,%1%,%2%)".fmt(random_int(45, 105), random_int(50, 100),
-        random_int(25, 75));
+    // return "hsl(%0,%1%,%2%)".fmt(zap.random_int(345, 375) % 360,
+    //    zap.random_int(75, 100), zap.random_int(35, 65));
+    // return "hsl(%0,%1%,%2%)".fmt(zap.random_int(165, 195),
+    //    zap.random_int(0, 50), zap.random_int(85, 100));
+    return "hsl(%0,%1%,%2%)".fmt(zap.random_int(45, 105),
+        zap.random_int(50, 100), zap.random_int(25, 75));
   };
 
   Map.prototype.tree_color = function (x, y, z) {
-    return "hsl(%0,%1%,%2%)".fmt(random_int(105, 135), random_int(50, 100),
-        random_int(50, 100));
+    return "hsl(%0,%1%,%2%)".fmt(zap.random_int(105, 135),
+        zap.random_int(50, 100), zap.random_int(50, 100));
   };
 
   Map.prototype.sea_color = function () {
-    return "hsl(%0,%1%,%2%)".fmt(random_int(195, 205), random_int(70, 80),
-        random_int(60, 70));
+    return "hsl(%0,%1%,%2%)".fmt(zap.random_int(195, 205),
+        zap.random_int(70, 80), zap.random_int(60, 70));
   };
 
   Map.prototype.tile = function (x, y) {
-    return this.tiles[y] && this.tiles[y][x] || { z: 0, color: this.sea_color() };
+    return this.tiles[y] && this.tiles[y][x] ||
+      { z: 0, color: this.sea_color() };
   };
 
   Map.prototype.mean_z = function (x, y) {
@@ -260,7 +80,7 @@ String.prototype.fmt = function () {
   }
 
   function Box(svg, box, size) {
-    this.svg = svg
+    this.svg = svg;
     this.tiles = box.querySelector(".tiles");
     this.size = size;
     var vb = svg.viewBox.baseVal;
@@ -270,9 +90,9 @@ String.prototype.fmt = function () {
     var offset = vb.height - (2 * h * SZ - h);
     this.x = 0;
     this.y = 0;
-    var mask = svg.appendChild($rect({ x: vb.x, y: vb.y, width: vb.width,
+    var mask = svg.appendChild(zap.$rect({ x: vb.x, y: vb.y, width: vb.width,
       height: vb.height, "fill-opacity": 0 }));
-    this.drag = new Drag(mask);
+    this.drag = new zap.Drag(mask);
     this.drag.transform = function (x, y) {
       var p = svg.createSVGPoint();
       p.x = x;
@@ -298,7 +118,7 @@ String.prototype.fmt = function () {
   var push = Array.prototype.push;
 
   Box.prototype.draw_map = function (map) {
-    clear(this.tiles);
+    zap.clear(this.tiles);
     this.draw_frame(map);
     this.draw_tiles(map);
   };
@@ -317,7 +137,7 @@ String.prototype.fmt = function () {
       push.apply(points, this.transform_point(x_, y + this.y, map));
     }
     push.apply(points, this.transform_point(x_, this.y, -1));
-    return this.tiles.appendChild($polyline({ fill: "#333",
+    return this.tiles.appendChild(zap.$polyline({ fill: "#333",
       points: points.join(" ")}));
   }
 
@@ -326,15 +146,15 @@ String.prototype.fmt = function () {
     for (var x = 0, y = 0; x < sz && y < sz;) {
       var x_ = x + this.x;
       var y_ = y + this.y;
-      var g = this.tiles.appendChild($g());
-      var tile = g.appendChild($path());
+      var g = this.tiles.appendChild(zap.$g());
+      var tile = g.appendChild(zap.$path());
       var points = [];
       push.apply(points, this.transform_point(x_, y_, map));
       push.apply(points, this.transform_point(x_ + 1, y_, map));
       push.apply(points, this.transform_point(x_ + 1, y_ + 1, map));
       push.apply(points, this.transform_point(x_, y_ + 1, map));
       var color = map.tile(x_, y_).color;
-      g.appendChild($path({ fill: color, stroke: color,
+      g.appendChild(zap.$path({ fill: color, stroke: color,
         d: String.prototype.fmt.apply("M%0,%1L%2,%3L%4,%5L%6,%7Z", points) }));
       this.draw_tree(g, map.tile(x_, y_).tree);
       ++x;
@@ -355,9 +175,9 @@ String.prototype.fmt = function () {
     }
     var p = this.transform_point(tree.x, tree.y, tree.z);
     var q = this.transform_point(tree.x, tree.y, tree.z + tree.h);
-    g.appendChild($g({ "class": "tree" },
-      $line({ x1: p[0], x2: q[0], y1: p[1], y2: q[1], stroke: "#444" }),
-      $circle({ cx: q[0], cy: q[1], r: tree.r * (p[1] - q[1]),
+    g.appendChild(zap.$g({ "class": "tree" },
+      zap.$line({ x1: p[0], x2: q[0], y1: p[1], y2: q[1], stroke: "#444" }),
+      zap.$circle({ cx: q[0], cy: q[1], r: tree.r * (p[1] - q[1]),
         fill: tree.color })));
   };
 
@@ -368,7 +188,7 @@ String.prototype.fmt = function () {
   box.y = SZ;
   box.draw_map(map);
 
-  var loop = new Loop();
+  var loop = new zap.Loop();
   loop.every(function (dt) {
     box.draw_map(map);
   }, 1000);
