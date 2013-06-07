@@ -1,8 +1,5 @@
 "use strict";
 
-// Get some ideas from:
-// http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/
-
 String.prototype.fmt = function () {
   var args = arguments;
   return this.replace(/%(\d+|%|\((\d+)\))/g, function (_, p, pp) {
@@ -61,29 +58,35 @@ String.prototype.fmt = function () {
     return min + Math.floor(Math.random() * (max + 1 - min));
   }
 
-  var Loop = function () {
-    var req = (window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
-        function (f) {
-          return window.setTimeout(function () {
-            f(Date.now());
-          }, 15);
+  var request_animation_frame = (window.requestAnimationFrame ||
+      window.webkitRequestAnimationFrame ||
+      window.mozRequestAnimationFrame ||
+      window.msRequestAnimationFrame ||
+      function (f) {
+        return window.setTimeout(function () {
+          f(Date.now());
+        }, 15);
       }).bind(window);
-    var start = Date.now();
+  var cancel_animation_frame = (window.cancelAnimationFrame ||
+      window.webkitCancelAnimationFrame ||
+      window.mozCancelAnimationFrame ||
+      window.msCancelAnimationFrame ||
+      window.clearTimeout).bind(window);
+
+  var Loop = function () {
     this._every = [];
     this._at = [];
-    var update = function () {
-      this.current = Date.now() - start;
+    this.update = function () {
+      this.elapsed = Date.now() - this.start;
       for (var i = this._at.length - 1;
-          i >= 0 && this._at[i][0] <= this.current; --i);
+          i >= 0 && this._at[i][0] <= this.elapsed; --i);
       this._at.splice(i + 1).forEach(function (at) {
         at[1].call(this);
       }, this);
-      req(update);
+      this.req = request_animation_frame(this.update);
     }.bind(this);
-    update();
+    this.start = Date.now();
+    this.update();
   };
 
   Loop.prototype.at = function (f, t) {
@@ -91,14 +94,31 @@ String.prototype.fmt = function () {
     this._at.splice(i, 0, [t, f]);
   };
 
-  // TODO: Keep track of when the next "ideal" step should take place so that we
-  // don’t drift too much
   Loop.prototype.every = function (f, dur) {
     var f_ = function () {
-      this.at(f_, this.current + dur);
-      f.call(this);
+      var d = f_.next - this.elapsed + dur;
+      f_.next += dur;
+      this.at(f_, this.elapsed + d);
+      f.call(this, this.elapsed - f_.last);
+      f_.last = this.elapsed;
     };
-    this.at(f_, this.current);
+    f_.last = this.elapsed;
+    f_.next = this.elapsed;
+    this.at(f_, this.elapsed);
+  };
+
+  Loop.prototype.pause = function () {
+    if (this.req) {
+      cancel_animation_frame(this.req);
+      delete this.req;
+    }
+  };
+
+  Loop.prototype.resume = function () {
+    if (!this.req) {
+      this.start = Date.now() - (this.elapsed || 0);
+      this.update();
+    }
   };
 
   function nop() {}
@@ -313,7 +333,6 @@ String.prototype.fmt = function () {
       push.apply(points, this.transform_point(x_ + 1, y_, map));
       push.apply(points, this.transform_point(x_ + 1, y_ + 1, map));
       push.apply(points, this.transform_point(x_, y_ + 1, map));
-      // TODO return a function for the color so that it is animated
       var color = map.tile(x_, y_).color;
       g.appendChild($path({ fill: color, stroke: color,
         d: String.prototype.fmt.apply("M%0,%1L%2,%3L%4,%5L%6,%7Z", points) }));
@@ -350,9 +369,12 @@ String.prototype.fmt = function () {
   box.draw_map(map);
 
   var loop = new Loop();
-  loop.every(function () {
+  loop.every(function (dt) {
     box.draw_map(map);
   }, 1000);
+
+  window.pause = function () { loop.pause(); };
+  window.resume = function () { loop.resume(); };
 
   box.drag.onstart = function (x, y) {
     this.__x0 = box.x;
